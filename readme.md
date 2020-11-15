@@ -1,8 +1,8 @@
-# Pidgeon
+# Pigeon
 
 <center>
 
-![pidgeon](assets/pidgeon.png#pidgeon)
+![pigeon](assets/pigeon.png#pigeon)
 
 _TP Grupal - IASC 2C2020_
 
