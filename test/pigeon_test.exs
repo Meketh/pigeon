@@ -1,8 +1,18 @@
-defmodule PigeonTest do
+defmodule Pigeon.Test do
   use ExUnit.Case
   doctest Pigeon
 
-  test "greets the world" do
-    assert Pigeon.hello() == :world
-  end
+  # test "sadhjfashdfkjasd" do
+  #   {:ok, pid} = Pigeon.signup("Sarasa")
+  #   assert is_pid(pid)
+  # end
+
+  # test "asdjkmfñlkasd" do
+  #   {:ok, user} = Pigeon.signup("Sarasa")
+  #   {:ok, pid} = Pigeon.login("Sarasa")
+  #   assert user == pid
+  #   {:ok, chat} = Pigeon.get_chat(user, "Juan")
+  #   # {:ok, messages} = Chat.get(chat)
+  #   # assert messages == []
+  # end
 end
