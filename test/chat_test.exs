@@ -86,4 +86,60 @@ defmodule Chat.Test do
 
     assert {:ok, [{date,^admin, ^msg,_}]} = Chat.get_msgs(chat)
   end
+
+  test "Sarasa se enoja con Juan y lo saca del grupo" do
+    group_integrants = ["Juan","Maria"]
+    admin = "Sarasa"
+    chat="TP IASC 2020"
+    removed_integrant="Juan"
+
+    {:ok, pid} = Chat.new_group_chat(group_integrants,admin,chat)
+    :ok = Chat.delete_integrant(chat,removed_integrant,admin)
+
+    assert {:ok,["Maria","Sarasa"]} = Chat.get_all_integrants(chat)
+  end
+
+  test "Sarasa crea grupo y agrega a Hercules" do
+    group_integrants = ["Juan","Maria"]
+    admin = "Sarasa"
+    chat="TP IASC 2020"
+    new_integrant="Hercules"
+
+    {:ok, pid} = Chat.new_group_chat(group_integrants,admin,chat)
+    :ok = Chat.add_integrant(chat,new_integrant,admin)
+
+    new_integrants=Enum.concat(group_integrants,[admin,new_integrant])
+
+    assert {:ok,^new_integrants} = Chat.get_all_integrants(chat)
+  end
+
+  test "Zeus hace admin a Hercules por ser su hijo" do
+    group_integrants = ["Hestia","Hercules"]
+    admin = "Zeus"
+    chat="Olimpo"
+    new_admin="Hercules"
+
+    {:ok, pid} = Chat.new_group_chat(group_integrants,admin,chat)
+
+    assert {:ok,["Zeus"]} = Chat.get_admin_integrants(chat)
+
+    :ok = Chat.make_admin(chat,new_admin,admin)
+
+    assert {:ok,["Zeus","Hercules"]} = Chat.get_admin_integrants(chat)
+  end
+
+  test "Sarasa quiere hacer admin a Hercules y no puede por no ser un semidios" do
+    group_integrants = ["Sarasa","Hercules"]
+    admin = "Zeus"
+    chat="Olimpo"
+    new_admin="Hercules"
+
+    {:ok, pid} = Chat.new_group_chat(group_integrants,admin,chat)
+
+    assert {:ok,["Zeus"]} = Chat.get_admin_integrants(chat)
+
+    assert {:error, :insuficient_permissions} = Chat.make_admin(chat,new_admin,"Sarasa")
+
+    assert {:ok,["Zeus"]} = Chat.get_admin_integrants(chat)
+  end
 end
