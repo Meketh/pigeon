@@ -14,11 +14,11 @@ defmodule Chat.Test do
 
     :ok = Chat.send(chat, sender, msg)
     {:ok, msgs} = Chat.get_msgs(chat)
-    assert  [{t1, ^sender, ^msg}] = msgs
+    assert  [{t1, ^sender, ^msg,_}] = msgs
 
     :ok = Chat.send(chat, sender, other_msg)
     {:ok, msgs} = Chat.get_msgs(chat)
-    assert [{^t1, ^sender, ^msg}, {t2, ^sender, ^other_msg}] = msgs
+    assert [{^t1, ^sender, ^msg,_}, {t2, ^sender, ^other_msg,_}] = msgs
   end
 
   test "Creo un chat vacio y rompe (porque esta vacio...)" do
@@ -36,5 +36,41 @@ defmodule Chat.Test do
     {:ok, pid} = Chat.new_chat(["Sarasa", "Juan"],nombre_chat)
     assert is_pid(pid)
     assert {:ok, ^pid} = Chat.find(nombre_chat)
+  end
+
+  test "Sarasa comete un orror de ortografia y modifica el mensaje" do
+    sender="Sarasa"
+    msg="che cuando ahi que rendir el parsial?"
+    new_msg="che cuando hay que rendir el parcial?"
+    chat="Juan:Sarasa"
+
+    {:ok, pid} = Chat.new_chat(["Sarasa", "Juan"])
+    :ok = Chat.send(chat, sender, msg)
+    {:ok, msgs} = Chat.get_msgs(chat)
+
+    {date,sender, msg,_} = Enum.at(msgs,-1)
+
+    assert :ok = Chat.update(chat,sender,date,new_msg)
+
+    {:ok, msgs} = Chat.get_msgs(chat)
+
+    assert {^date,^sender, ^new_msg,_} = Enum.at(msgs,-1)
+
+  end
+
+  test "Sarasa insulta a Juan, se acobarda y elimina el mensaje" do
+    sender="Sarasa"
+    msg="Eh Juan, sos un pelado cobolero"
+    chat="Juan:Sarasa"
+
+    {:ok, pid} = Chat.new_chat(["Sarasa", "Juan"])
+    :ok = Chat.send(chat, sender, msg)
+    {:ok, msgs} = Chat.get_msgs(chat)
+
+    {date,sender, msg,_} = Enum.at(msgs,-1)
+
+    assert :ok = Chat.delete(chat,sender,date)
+
+    assert {:ok, []} = Chat.get_msgs(chat)
   end
 end
