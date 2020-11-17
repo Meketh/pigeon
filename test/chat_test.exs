@@ -73,4 +73,17 @@ defmodule Chat.Test do
 
     assert {:ok, []} = Chat.get_msgs(chat)
   end
+
+  test "Sarasa crea un grupo con sus amigos y manda un mensaje" do
+    group_integrants = ["Juan","Maria"]
+    admin = "Sarasa"
+    chat="TP IASC 2020"
+    msg = "Mensaje de prueba"
+
+    {:ok, pid} = Chat.new_group_chat(group_integrants,admin,chat)
+    :ok = Chat.send(chat, admin, msg)
+    {:ok, msgs} = Chat.get_msgs(chat)
+
+    assert {:ok, [{date,^admin, ^msg,_}]} = Chat.get_msgs(chat)
+  end
 end

@@ -2,8 +2,13 @@ defmodule Chat do
   use Agent
   def get_name(key), do: {:via, Registry, {Chat.Registry, key}}
 
-  def start(key) do
-    Agent.start_link(fn -> [] end, name: get_name(key))
+  def start(key, integs \\ [], admin \\ nil) do
+    Agent.start_link(
+      fn ->
+        %{messages: [], integrants: integs, admin_integrants: if(admin, do: [admin], else: [])}
+      end,
+      name: get_name(key)
+    )
   end
 
   def find(key) do
@@ -15,10 +20,8 @@ defmodule Chat do
   end
 
   def get_msgs(chat) do
-    msgs =
-      get_name(chat)
-      |> Agent.get(& &1)
-
+    pid = get_name(chat)
+    msgs = Agent.get(pid, &Map.get(&1, :messages))
     {:ok, msgs}
   end
 
@@ -45,18 +48,24 @@ defmodule Chat do
   end
 
   def send(chat, sender, msg) do
-    get_name(chat)
-    |> Agent.update(&add_msg(&1, sender, msg))
+    pid = get_name(chat)
+    {:ok,msgs} = get_msgs(chat)
+    new_messages = add_msg(msgs, sender, msg)
+    Agent.update(pid, &Map.put(&1, :messages, new_messages))
   end
 
   def delete(chat, sender, date) do
-    get_name(chat)
-    |> Agent.update(&delete_msg(&1, sender, date))
+    pid = get_name(chat)
+    {:ok,msgs} = get_msgs(chat)
+    new_messages = delete_msg(msgs, sender, date)
+    Agent.update(pid, &Map.put(&1, :messages, new_messages))
   end
 
   def update(chat, sender, date, new_msg) do
-    get_name(chat)
-    |> Agent.update(&update_msg(&1, sender, date, new_msg))
+    pid = get_name(chat)
+    {:ok,msgs} = get_msgs(chat)
+    new_messages = update_msg(msgs, sender, date, new_msg)
+    Agent.update(pid, &Map.put(&1, :messages, new_messages))
   end
 
   def add_msg(msgs, sender, msg, date \\ DateTime.utc_now()) do
@@ -68,7 +77,15 @@ defmodule Chat do
     if Enum.count(participants) < 2 do
       {:error, :insuficient_participants}
     else
-      Chat.start(name || join_names(participants))
+      Chat.start(name || join_names(participants), participants)
+    end
+  end
+
+  def new_group_chat(participants, admin, name \\ nil) do
+    if Enum.count(participants) < 1 do
+      {:error, :insuficient_participants}
+    else
+      Chat.start(name || join_names(Enum.concat(participants, [admin])), participants, admin)
     end
   end
 
