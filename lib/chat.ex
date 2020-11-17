@@ -5,7 +5,8 @@ defmodule Chat do
     Agent.start_link(fn -> [] end, name: get_name(key))
   end
   def find(key) do
-    case Registry.lookup(User.Registry, key) do
+    # case Registry.lookup(User.Registry, key) do
+    case Registry.lookup(Chat.Registry, key) do
       [{pid, _}] -> {:ok, pid}
       [] -> {:error, :not_found}
     end

@@ -2,11 +2,11 @@ defmodule User.Test do
   use ExUnit.Case
   doctest User
 
-  test "no encuentra usuarios inexistentes" do
+  test "Usuario Sarasa no existe por eso rompe" do
     assert {:error, :not_found} = User.find("Sarasa")
   end
 
-  test "encuentra usuarios nuevos" do
+  test "Creo a Sarasa y lo encuentro" do
     User.start("Sarasa")
     assert {:ok, pid} = User.find("Sarasa")
     assert is_pid(pid)
