@@ -18,20 +18,44 @@ defmodule Chat do
     {:ok, msgs}
   end
 
-  def send(chat, sender, msg) do
+  def send(chat, sender, text) do
     get_name(chat)
-    |> Agent.update(&(add_msg(&1, sender, msg)))
+    |>Agent.update(&(add_msg(&1, sender, text)))
   end
 
-  def add_msg(msgs, sender, msg) do
-    List.insert_at(msgs, -1, {DateTime.utc_now(), sender, msg})
+  def remove(chat,text) do
+    get_name(chat)
+    |>Agent.update(&(delete_msg(&1, text)))
+  end
+
+  def update(chat,msg,text) do
+    get_name(chat)
+    |>Agent.update(&(delete_msg(&1, text)))
+  end
+
+  def add_msg(msgs, sender, text) do
+    List.insert_at(msgs, -1, %{id: UUID.uuid1(), date: DateTime.utc_now(), sender: sender, message: text})
+  end
+
+  def delete_msg(msgs, msg) do
+    List.delete(msgs,msg)
+  end
+
+  def update_msg(msgs, msg, text) do
+    index = Enum.find_index(msgs, fn x -> x.id == msg.id end)
+    List.replace_at(msgs,index,%{msg | message: text})
   end
 
   def new_chat(participants, name \\ nil) do
     if Enum.count(participants) < 2 do
       {:error, :insuficient_participants}
     else
-      Chat.start(name || join_names(participants))
+      chatname = name || join_names(participants)
+      {:ok,pid,chatname} =
+        case Chat.start(chatname) do
+        {:ok,pid} -> {:ok,pid,chatname}
+        {:error, {:already_started, pid}} -> {:ok,pid,chatname}
+        end
     end
   end
 
