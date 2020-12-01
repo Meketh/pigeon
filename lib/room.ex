@@ -70,7 +70,7 @@ defmodule Room do
   def find(key) do
     case Registry.lookup(Room.Registry, key) do
       [] -> {:error, :room_not_found}
-      [{pid, _}] -> get_room(key)
+      [{pid, _}] ->  get_room(key)
     end
   end
 end

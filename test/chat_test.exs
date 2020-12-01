@@ -22,17 +22,6 @@ defmodule Chat.Test do
     assert  %{date: t1, id: t2, message: ^other_msg, sender: ^sender} = msgs|>List.last
   end
 
-  test "Creo un chat vacio y rompe (porque esta vacio...)" do
-    # assert {:error, :insuficient_participants} = Chat.new_chat([])
-    assert true
-  end
-
-  test "Sarasa crea un chat y lo encuentra por nombre default" do
-    # {:ok, pid} = Chat.new_chat(["Sarasa", "Juan"])
-    # assert is_pid(pid)
-    # assert {:ok, ^pid} = Chat.find("Juan:Sarasa")
-    assert true
-  end
 
   test "Sarasa crea un chat y le pone el nombre que quiere" do
     # nombre_chat="quieroEsteNombre!"

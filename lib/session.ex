@@ -1,11 +1,11 @@
 defmodule Session do
   use Agent
-  def get_name(key), do: {:via, Registry, {Session.Registry, key}}
-  def start(key) do
-    Agent.start_link(fn -> [] end, name: get_name(key))
+  def get_name(userid), do: {:via, Registry, {Session.Registry, userid}}
+  def start(userid, pid  \\ []) do
+    Agent.start_link(fn -> pid end, name: get_name(userid))
   end
-  def update(key,value) do
-    get_name(key)
+  def update(userid,value) do
+    get_name(userid)
     |> Agent.update(&(update_pid(&1, value)))
   end
 
@@ -17,11 +17,11 @@ defmodule Session do
     newpid
   end
 
-  defp get_active(key) do
-    pid = get_name(key) |> Agent.get(&(&1));
+  defp get_active(userid) do
+    pid = get_name(userid) |> Agent.get(&(&1));
     if is_pid(pid) && !Process.alive?(pid) do
       pid = []
-      :ok = update(key,pid)
+      :ok = update(userid,pid)
     end
     if pid == [] do
       {:error,:session_not_found}
@@ -30,10 +30,10 @@ defmodule Session do
     end
   end
 
-  def find(key) do
-    case Registry.lookup(Session.Registry, key) do
+  def find(userid) do
+    case Registry.lookup(Session.Registry, userid) do
       [] -> {:error, :user_not_found}
-      [{pid, _}] -> get_active(key)
+      [{pid, _}] -> get_active(userid)
     end
   end
 end
