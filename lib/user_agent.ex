@@ -1,6 +1,6 @@
-defmodule Session do
+defmodule User.Agent do
   use Agent
-  def get_name(userid), do: {:via, Registry, {Session.Registry, userid}}
+  def get_name(userid), do: {:via, Registry, {User.Registry, userid}}
   def start(userid, pid  \\ []) do
     Agent.start_link(fn -> pid end, name: get_name(userid))
   end

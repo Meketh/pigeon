@@ -22,8 +22,7 @@ Nuestra arquitectura va a tener que soportar los siguientes requerimientos:
   - enviar mensajes
   - modificar y eliminar los mensajes que enviaron previamente
   - recibir notificaciones cuando otros usuarios les envían un nuevo mensaje
-- Chats 1 a 1 seguros, donde se asegura que los mensajes se borrarán después de cierto tiempo, especificado por el emisor
-- Chats de grupo, que soporten las mismas operaciones mencionadas anteriormente, además de tener un usuario administrador, que va a poder:
+c n- Chats de grupo, que soporten las mismas operaciones mencionadas anteriormente, además de tener un usuario administrador, que va a poder:
   - agregar y sacar gente del grupo
   - borrar cualquier mensaje
   - darle privilegios de administrador a otros usuarios

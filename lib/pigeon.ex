@@ -3,7 +3,10 @@ defmodule Pigeon do
 
   def start(_type, _args) do
     children = [
-      {Registry, [keys: :unique, name: Session.Registry]},
+      {Chat.Supervisor,  []},
+      {Room.Supervisor,  []},
+      {User.Supervisor,  []},
+      {Registry, [keys: :unique, name: User.Registry]},
       {Registry, [keys: :unique, name: Chat.Registry]},
       {Registry, [keys: :unique, name: Room.Registry]}
     ]
