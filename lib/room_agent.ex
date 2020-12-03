@@ -5,21 +5,7 @@ defmodule Room.Agent do
     Agent.start_link(fn -> value end, name: get_name(key))
   end
 
-  @spec new(atom(), String, String) :: {atom(), pid(),String}
-  def new(:personal, creator, guest) do
-    participants = [creator,guest]
-    roomname = participants|>join_names
-    {:ok, pid} = start(roomname,%{type: :personal, participants: participants})
-    {:ok,pid,roomname}
-  end
 
-  @spec new(atom(), String, List) :: {atom(), pid(),String}
-  def new(:group, creator, guests) do
-    participants = [creator|guests]
-    roomname = participants|>join_names
-    {:ok, pid} = start(roomname, %{type: :group, administrators: [creator], participants: participants})
-    {:ok,pid,roomname}
-  end
 
   defp members?(list,sublist) do
     Enum.all?(sublist, &Enum.member?(list, &1))
