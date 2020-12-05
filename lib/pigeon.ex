@@ -2,9 +2,10 @@ defmodule Pigeon do
   use Application
 
   def start(_type, _args) do
+    import Supervisor.Spec, warn: false
+
     children = [
-      {Chat.Supervisor,  []},
-      {Room.Supervisor,  []},
+      {Room.Dynamic.Supervisor, start: {Room.Dynamic.Supervisor, :start_link, [[]]} },
       {User.Supervisor,  []},
       {Registry, [keys: :unique, name: User.Registry]},
       {Registry, [keys: :unique, name: Chat.Registry]},

@@ -1,7 +1,12 @@
 defmodule Room do
   use GenServer
-  def start_link(state) do
-    GenServer.start_link(__MODULE__, state, name: __MODULE__)
+
+  def start_link(name, state) do
+    GenServer.start_link(__MODULE__, state, name: name)
+  end
+
+  def child_spec({name, state}) do
+    %{id: name, start: {__MODULE__, :start_link, [name, state]}, type: :worker}
   end
 
   def new_group(pid,creator,guests) do
