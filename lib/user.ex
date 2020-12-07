@@ -1,5 +1,5 @@
 defmodule User do
-  # use GenServer
+  use GenServer
   alias Horde.DynamicSupervisor, as: HDS
   def via(name), do: {:via, Horde.Registry, {User.Registry, name}}
   def new(name), do: HDS.start_child(Horde, child_spec(name))
@@ -16,8 +16,11 @@ defmodule User do
     end
   end
   def init(name) do
-    # {:ok, _} = Agenda.new(name)
-    {:ok, name}
+    # {:ok,_} = Agenda.start_link(name)
+    case Agenda.new(name) do
+      {:ok, _}->{:ok,name}
+      error->error
+    end
   end
   def name(pid) do
     GenServer.call(pid, {:name})
