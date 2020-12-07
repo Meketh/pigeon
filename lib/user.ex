@@ -1,5 +1,5 @@
 defmodule User do
-  use GenServer
+  # use GenServer
   alias Horde.DynamicSupervisor, as: HDS
   def via(name), do: {:via, Horde.Registry, {User.Registry, name}}
   def new(name), do: HDS.start_child(Horde, child_spec(name))

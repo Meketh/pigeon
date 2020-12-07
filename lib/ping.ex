@@ -15,7 +15,7 @@ defmodule Ping.Application do
       {Horde.DynamicSupervisor, [name: Agenda.Supervisor,
         members: :auto,
         strategy: :one_for_one,
-        distribution_strategy: Horde.Distribution,
+        distribution_strategy: State.Distribution,
       ]},
     ], [strategy: :one_for_one, name: Ping.Supervisor])
   end
