@@ -1,6 +1,6 @@
 defmodule Pigeon.Test do
   use ExUnit.Case
-  doctest Pigeon
+  doctest Pigeon.Application
 
   # test "sadhjfashdfkjasd" do
   #   {:ok, pid} = Pigeon.signup("Sarasa")

@@ -1,14 +1,14 @@
-defmodule User do
-  # use GenServer
+defmodule Agenda do
+  # use Agent
   alias Horde.DynamicSupervisor, as: HDS
-  def via(name), do: {:via, Horde.Registry, {User.Registry, name}}
+  def via(name), do: {:via, Horde.Registry, {Agenda.Registry, name}}
   def new(name), do: HDS.start_child(Horde, child_spec(name))
   def child_spec(name), do: %{
     id: "#{__MODULE__}_#{name}",
     start: {__MODULE__, :start_link, [name]},
   }
   def start_link(name) do
-    :logger.debug("Node: #{Node.self()} User: #{name}")
+    :logger.debug("Node: #{Node.self()} Agenda: #{name}")
     case GenServer.start_link(__MODULE__, name, name: via(name)) do
       {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, pid}} -> {:ok, pid}
@@ -16,13 +16,12 @@ defmodule User do
     end
   end
   def init(name) do
-    # {:ok, _} = Agenda.new(name)
     {:ok, name}
   end
-  def name(pid) do
-    GenServer.call(pid, {:name})
+  def add(pid, name) do
+    Agent.update(pid, &Map.put(&1, name, 0))
   end
-  def handle_call({:name}, _from, name) do
-    {:reply, name, name}
+  def get(pid) do
+    Agent.get(pid, & &1)
   end
 end
