@@ -1,7 +1,9 @@
 defmodule Horde.Distribution do
   @behaviour Horde.DistributionStrategy
   def has_quorum?(_members), do: true
-  def choose_node(identifier, members) do
+  def choose_node(child_spec, members) do
+    identifier = :erlang.phash2(Map.drop(child_spec, [:id]))
+
     :logger.debug("Horde ID: #{inspect identifier}")
     members
     |> Enum.filter(&match?(%{status: :alive}, &1))
