@@ -43,9 +43,8 @@ defmodule Ping.Test do
   end
 
   test "Prueba de concepto replicacion agenda" do
-    {:ok, _} = User.new("Pepe")
 
-    agenda_pepe = Agenda.via("Pepe")
+    {:ok,agenda_pepe} = Agenda.dnew("Pepe",["","2"])
     agenda_copia = Agenda.via("Pepe_2")
 
     assert %{} = Agenda.get(agenda_pepe)
@@ -53,7 +52,7 @@ defmodule Ping.Test do
 
     Agenda.add(agenda_pepe,"chat_nuevo")
 
-    Process.sleep(1)
+    Process.sleep(100)
 
     assert %{"chat_nuevo"=>0} = Agenda.get(agenda_pepe)
     assert %{"chat_nuevo"=>0} = Agenda.get(agenda_copia)

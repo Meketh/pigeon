@@ -11,10 +11,31 @@ defmodule Agenda do
   # end
   def new(name), do: HDS.start_child(Agenda.Supervisor, child_spec(name))
 
-  def child_spec(name), do: %{
-    id: "#{__MODULE__}_#{name}_#{Node.self()}",
-    start: {__MODULE__, :start_link, [name]},
-  }
+  def dnew(name, nodes \\ [""]) do
+    result =
+      Enum.map(nodes, fn n -> HDS.start_child(Agenda.Supervisor, child_spec("#{name}_#{n}")) end)
+
+    pids = Enum.map(result, fn r ->
+      case r do
+        {:ok,pid}->pid
+        _->nil
+      end
+    end)
+
+    pids = Enum.filter(pids, fn pid -> pid end)
+
+    Enum.each(pids, fn p ->
+      DeltaCrdt.set_neighbours(p, Enum.filter(pids, fn pid -> !(pid == p) end))
+    end)
+
+    Enum.at(result, 0)
+  end
+
+  def child_spec(name),
+    do: %{
+      id: "#{__MODULE__}_#{name}_#{Node.self()}",
+      start: {__MODULE__, :start_link, [name]}
+    }
 
   def start_link(name) do
     :logger.debug("Node: #{Node.self()} Agenda: #{name}")
@@ -22,17 +43,8 @@ defmodule Agenda do
     # Horde.Registry.register(Agenda.Registry, name, crdt1)
     # {:ok, crdt1}
 
-    opts = [name: via(name),sync_interval: 3]
-    {:ok,pid} = DeltaCrdt.start_link(DeltaCrdt.AWLWWMap,opts)
-
-    opts2 = [name: via("#{name}_2"),sync_interval: 3]
-    {:ok,pid2} = DeltaCrdt.start_link(DeltaCrdt.AWLWWMap,opts2)
-
-    DeltaCrdt.set_neighbours(pid, [pid2])
-    DeltaCrdt.set_neighbours(pid2, [pid])
-
-    {:ok,pid}
-
+    opts = [name: via(name), sync_interval: 3]
+    DeltaCrdt.start_link(DeltaCrdt.AWLWWMap, opts)
 
     # Agent.start_link(fn -> %{} end, name: via(name))
 
@@ -42,6 +54,7 @@ defmodule Agenda do
     #   error -> error
     # end
   end
+
   # def init(name) do
   #   {:ok, name}
   # end
@@ -51,9 +64,9 @@ defmodule Agenda do
     # Agent.update(pid, &Map.put(&1, name, 0))
     # Agent.update(pid, &Map.put(&1, name, 0))
   end
+
   def get(pid) do
     DeltaCrdt.read(pid)
     # Agent.get(pid, & &1)
   end
-
 end
