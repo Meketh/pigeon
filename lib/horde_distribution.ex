@@ -2,7 +2,7 @@ defmodule Horde.Distribution do
   @behaviour Horde.DistributionStrategy
   def has_quorum?(_members), do: true
   def choose_node(identifier, members) do
-    :logger.debug("Horde ID: #{inspect identifier}")
+    # :logger.debug("Horde ID: #{inspect identifier}")
     members
     |> Enum.filter(&match?(%{status: :alive}, &1))
     |> Map.new(fn member -> {member.name, member} end)

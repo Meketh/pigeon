@@ -2,24 +2,6 @@ version: "3"
 networks:
   net: {ipam: {config: [{subnet: 10.0.0.0/24}]}}
 services:
-  test:
-    networks: [net]
-    image: elixir:local
-    build:
-      context: .
-      dockerfile: docker/dockerfile
-    environment:
-      - MIX_CMD=test
-    command: sh ./entrypoint.sh
-    volumes:
-      - ./docker/entrypoint.sh:/app/entrypoint.sh
-      - ./lib:/app/lib
-      - ./test:/app/test
-      - ./config:/app/config
-      - ./mix.exs:/app/mix.exs
-      - ./mix.lock:/app/mix.lock
-      - mix_build:/app/_build
-      - mix_deps:/app/deps
   node:
     networks: [net]
     image: elixir:local
@@ -36,8 +18,4 @@ services:
       - ./config:/app/config
       - ./mix.exs:/app/mix.exs
       - ./mix.lock:/app/mix.lock
-      - mix_build:/app/_build
-      - mix_deps:/app/deps
-volumes:
-  mix_build:
-  mix_deps:
+      - ./deps:/app/deps
