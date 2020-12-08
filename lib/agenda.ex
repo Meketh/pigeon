@@ -21,9 +21,18 @@ defmodule Agenda do
     # {:ok, crdt1} = DeltaCrdt.start_link(DeltaCrdt.AWLWWMap)
     # Horde.Registry.register(Agenda.Registry, name, crdt1)
     # {:ok, crdt1}
-    opts = [name: via(name)]
 
-    DeltaCrdt.start_link(DeltaCrdt.AWLWWMap,opts)
+    opts = [name: via(name),sync_interval: 3]
+    {:ok,pid} = DeltaCrdt.start_link(DeltaCrdt.AWLWWMap,opts)
+
+    opts2 = [name: via("#{name}_2"),sync_interval: 3]
+    {:ok,pid2} = DeltaCrdt.start_link(DeltaCrdt.AWLWWMap,opts2)
+
+    DeltaCrdt.set_neighbours(pid, [pid2])
+    DeltaCrdt.set_neighbours(pid2, [pid])
+
+    {:ok,pid}
+
 
     # Agent.start_link(fn -> %{} end, name: via(name))
 
@@ -46,4 +55,5 @@ defmodule Agenda do
     DeltaCrdt.read(pid)
     # Agent.get(pid, & &1)
   end
+
 end

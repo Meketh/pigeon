@@ -21,6 +21,7 @@ defmodule Ping.Test do
     Agenda.add(agenda,"un_chat")
     assert %{"un_chat"=>0} = Agenda.get(agenda)
   end
+
   test "Multiple users adds chat to agenda" do
     {:ok, _} = User.new("Pepe")
     {:ok, _} = User.new("Jose")
@@ -29,8 +30,8 @@ defmodule Ping.Test do
 
     agenda_pepe = Agenda.via("Pepe")
     agenda_jose = Agenda.via("Jose")
-    agenda_maria = Agenda.via("Jose")
-    agenda_listorti = Agenda.via("Jose")
+    agenda_maria = Agenda.via("Maria")
+    agenda_listorti = Agenda.via("Listorti")
 
     Agenda.add(agenda_jose,"chat_jose")
     Agenda.add(agenda_listorti,"chat_listorti")
@@ -39,5 +40,22 @@ defmodule Ping.Test do
     assert %{"chat_listorti"=>0} = Agenda.get(agenda_listorti)
     assert %{} = Agenda.get(agenda_pepe)
     assert %{} = Agenda.get(agenda_maria)
+  end
+
+  test "Prueba de concepto replicacion agenda" do
+    {:ok, _} = User.new("Pepe")
+
+    agenda_pepe = Agenda.via("Pepe")
+    agenda_copia = Agenda.via("Pepe_2")
+
+    assert %{} = Agenda.get(agenda_pepe)
+    assert %{} = Agenda.get(agenda_copia)
+
+    Agenda.add(agenda_pepe,"chat_nuevo")
+
+    Process.sleep(1)
+
+    assert %{"chat_nuevo"=>0} = Agenda.get(agenda_pepe)
+    assert %{"chat_nuevo"=>0} = Agenda.get(agenda_copia)
   end
 end
