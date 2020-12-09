@@ -4,18 +4,16 @@ networks:
 services:
   node:
     networks: [net]
+    build: .
     image: elixir:local
-    build:
-      context: .
-      dockerfile: docker/dockerfile
     environment:
       - MIX_CMD=run
     command: sh ./entrypoint.sh
     volumes:
-      - ./docker/entrypoint.sh:/app/entrypoint.sh
+      - ./entrypoint.sh:/app/entrypoint.sh
+      - ./config:/app/config
+      - ./deps:/app/deps
       - ./lib:/app/lib
       - ./test:/app/test
-      - ./config:/app/config
       - ./mix.exs:/app/mix.exs
       - ./mix.lock:/app/mix.lock
-      - ./deps:/app/deps

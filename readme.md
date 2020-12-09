@@ -1,12 +1,7 @@
 # Pigeon
 
-<center>
-
 ![pigeon](assets/pigeon.png#pigeon)
-
 _TP Grupal - IASC 2C2020_
-
-</center>
 
 ## Contexto
 
@@ -22,7 +17,7 @@ Nuestra arquitectura va a tener que soportar los siguientes requerimientos:
   - enviar mensajes
   - modificar y eliminar los mensajes que enviaron previamente
   - recibir notificaciones cuando otros usuarios les envían un nuevo mensaje
-c n- Chats de grupo, que soporten las mismas operaciones mencionadas anteriormente, además de tener un usuario administrador, que va a poder:
+- Chats de grupo, que soporten las mismas operaciones mencionadas anteriormente, además de tener un usuario administrador, que va a poder:
   - agregar y sacar gente del grupo
   - borrar cualquier mensaje
   - darle privilegios de administrador a otros usuarios

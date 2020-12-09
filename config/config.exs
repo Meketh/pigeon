@@ -1,5 +1,7 @@
 import Config
-config :swarm, distribution_strategy: Swarm.Distribution, debug: false
+config :nanoid, size: 7
+config :swarm, distribution_strategy: Swarm.Distribution,
+  debug: false, node_whitelist: [~r/^pigeon@.*$/]
 
 config :peerage, interval: 1
 ips = System.get_env("NODE_IPS")
