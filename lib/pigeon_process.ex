@@ -22,7 +22,11 @@ defmodule Pigeon.Process do
     2
   end
 
-  def dnew(name,supervisor,module) do
+  def childrens_registered(key,registry) do
+    Enum.map(Horde.Registry.lookup(registry,key),fn {pid,_}->pid end)
+  end
+
+  def dnew(name,supervisor,module,registry) do
     nodes = Enum.map(Node.list(), fn n -> "#{n}" end)
     nodes = Enum.concat(nodes,["#{Node.self()}"])
 
@@ -30,9 +34,11 @@ defmodule Pigeon.Process do
 
     :logger.debug("CHILDREN DNEW: #{inspect HDS.which_children(supervisor)}")
 
-    children_pids = Enum.map(HDS.which_children(supervisor), fn {_, pid, _, _} -> pid end)
+    # children_pids = Enum.map(HDS.which_children(supervisor), fn {_, pid, _, _} -> pid end)
 
-    children_pids = Enum.filter(children_pids, fn  pid -> module.name(pid)==name  end)
+    # children_pids = Enum.filter(children_pids, fn  pid -> module.name(pid)==name  end)
+
+    children_pids = childrens_registered(name,registry)
 
     :logger.debug("IDS DNEW: #{inspect children_pids}")
 

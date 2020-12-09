@@ -3,12 +3,11 @@ defmodule Ping.Test do
   doctest Ping.Application
   alias Horde.Registry, as: HR
   alias Horde.DynamicSupervisor, as: HDS
+  alias Pigeon.Process, as: PP
 
   test "Crear user en otro nodo y preguntar su nombre" do
     nodo = get_random_node()
-
     key = "Pepe"
-    # key = "Pepe_#{nodo}"
 
     {:ok, pepe} = User.new(key,"#{nodo}")
 
@@ -20,9 +19,9 @@ defmodule Ping.Test do
 
     key = "Pepe"
 
-    {:ok, pepe} = User.new(key,"#{nodo}")
+    {:ok, _} = User.new(key,"#{nodo}")
 
-    Process.sleep(5000)
+    return_if_exists(key)
 
     [{un_pid, nil}] = HR.lookup(User.Registry, key)
 
@@ -40,34 +39,32 @@ defmodule Ping.Test do
     {:ok, _} = User.new(key_maria,"#{get_random_node()}")
     {:ok, _} = User.new(key_listorti,"#{get_random_node()}")
 
-    Process.sleep(5000)
+    return_if_exists(key_pepe)
+    return_if_exists(key_jose)
+    return_if_exists(key_maria)
+    return_if_exists(key_listorti)
 
     [{user_pepe, nil}] = HR.lookup(User.Registry, key_pepe)
     [{user_jose, nil}] = HR.lookup(User.Registry, key_jose)
     [{user_maria, nil}] = HR.lookup(User.Registry, key_maria)
     [{user_listorti, nil}] = HR.lookup(User.Registry, key_listorti)
 
-    user_pepe_2 = User.via(key_pepe)
-    user_jose_2 = User.via(key_jose)
-    user_maria_2 = User.via(key_maria)
-    user_listorti_2 = User.via(key_listorti)
-
-    assert user_pepe = user_pepe_2
-    assert user_jose = user_jose_2
-    assert user_maria = user_maria_2
-    assert user_listorti = user_listorti_2
+    assert ^key_pepe = User.name(user_pepe)
+    assert ^key_jose = User.name(user_jose)
+    assert ^key_maria =User.name( user_maria)
+    assert ^key_listorti =User.name( user_listorti)
   end
 
   test "Crear user en varios nodos sin repetir" do
     key = "Pepe"
 
-    instances_before = length(get_user_instances(key))
+    instances_before = length(PP.childrens_registered(key,User.Registry))
 
     resultado = User.dnew(key)
 
     Process.sleep(5000)
 
-    instances_after = length(get_user_instances(key))
+    instances_after = length(PP.childrens_registered(key,User.Registry))
 
     difference = instances_after - instances_before
 
@@ -76,17 +73,25 @@ defmodule Ping.Test do
   end
 
   def get_user_instances(name) do
-    children_pids = Enum.map(HDS.which_children(Horde), fn {_, pid, _, _} -> pid end)
+
+    children_pids = PP.childrens_registered(name,User.Registry)
 
     :logger.debug("CHILDREN PIDS: #{inspect children_pids}")
 
-    Enum.filter(children_pids, fn  pid -> User.name(pid)==name  end)
+    children_pids
   end
 
 
   def get_random_node do
-    nodes_to_choose =["pigeon@10.0.0.2","pigeon@10.0.0.3","pigeon@10.0.0.4"]# Enum.filter(["pigeon@10.0.0.2","pigeon@10.0.0.3","pigeon@10.0.0.4"],fn n-> !(n=="Node.self) end)
+    nodes_to_choose = Enum.concat(Node.list(),[Node.self()])#["pigeon@10.0.0.2","pigeon@10.0.0.3","pigeon@10.0.0.4"]# Enum.filter(["pigeon@10.0.0.2","pigeon@10.0.0.3","pigeon@10.0.0.4"],fn n-> !(n=="Node.self) end)
     Enum.random(nodes_to_choose)
+  end
+
+  def return_if_exists(name) do
+    Process.sleep(1000)
+    if(length(get_user_instances(name))==0) do
+      return_if_exists(name)
+    end
   end
 
 end

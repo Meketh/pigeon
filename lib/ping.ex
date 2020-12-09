@@ -5,7 +5,7 @@ defmodule Ping.Application do
   use Application
   def start(_type, _args) do
     Supervisor.start_link([
-      {Horde.Registry, [name: User.Registry, keys: :unique]},
+      {Horde.Registry, [name: User.Registry, keys: :unique,members: :auto]},
       # {Horde.Registry, [name: Agenda.Registry, keys: :unique]},
       {Horde.DynamicSupervisor, [name: Horde,
         members: :auto,
