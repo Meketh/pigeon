@@ -272,7 +272,10 @@ defmodule Horde.DynamicSupervisorImpl do
   end
 
   defp randomize_child_id(child) do
-    Map.put(child, :id, :rand.uniform(@big_number))
+    # {node_id,child} = Map.pop(child, :node_id)
+    # Map.put(child, :id, :rand.uniform(@big_number))
+    # Map.put(child, :id, node_id)
+    child
   end
 
   defp proxy_to_node(node_name, message, reply_to, state) do
@@ -750,9 +753,11 @@ defmodule Horde.DynamicSupervisorImpl do
   end
 
   defp choose_node(child_spec, state) do
+    # :logger.debug("NODES: #{inspect(Node.list)}")
+    # :logger.debug("MEMBERS: #{inspect(state.members_info)}")
 
     state.distribution_strategy.choose_node(
-      child_spec,
+      Map.get(child_spec,:id),
       Map.values(members(state))
     )
     # distribution_id = :erlang.phash2(Map.drop(child_spec, [:id]))

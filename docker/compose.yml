@@ -38,8 +38,10 @@ services:
       - ./config:/app/config
       - ./mix.exs:/app/mix.exs
       - ./mix.lock:/app/mix.lock
-      - mix_build:/app/_build
-      - mix_deps:/app/deps
+      - ./_build:/app/_build
+      - ./deps:/app/deps
+      # - mix_build:/app/_build
+      # - mix_deps:/app/deps
 volumes:
   mix_build:
   mix_deps:
