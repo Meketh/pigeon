@@ -1,5 +1,7 @@
 import Config
 config :nanoid, size: 7
+config :pigeon, cluster: Swarm, replicas: 3
+
 config :swarm, distribution_strategy: Swarm.Distribution,
   debug: false, node_whitelist: [~r/^pigeon@.*$/]
 

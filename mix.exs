@@ -1,10 +1,11 @@
 defmodule Pigeon.MixProject do
   use Mix.Project
-  def application, do: [
-    mod: {Pigeon.Application, []},
+  def application do
+    [mod: {Pigeon.Application, []},
     extra_applications: [:logger, :peerage]]
-  def project, do: [
-    app: :pigeon,
+  end
+  def project do
+    [app: :pigeon,
     version: "0.1.0",
     elixir: "~> 1.10",
     build_embedded: Mix.env() == :prod,
@@ -23,4 +24,5 @@ defmodule Pigeon.MixProject do
       {:delta_crdt, "~> 0.5.10"},
       {:nanoid, "~> 2.0.4"},
     ]]
+  end
 end
