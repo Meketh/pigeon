@@ -11,7 +11,6 @@ defmodule User do
     if pass(user) == pass, do: :ok,
     else: {:error, :user_pass_missmatch}
   end
-  def add(a, b), do: Group.new({a, b})
   # fetch
   defp pass(id), do: fetch(id, :pass)
   def groups(id), do: fetch(id, :groups)

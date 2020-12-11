@@ -4,9 +4,10 @@ defmodule Group do
     last_seen: :os.system_time,
     role: :admin]
 
-  def new({a, b}) do
+  def pm_id(a, b), do: Enum.sort([a, b])
+  def new_pm(a, b) do
     group = %Group{
-      id: Enum.sort([a, b]),
+      id: pm_id(a, b),
       role: :member}
     new_chat(group.id)
     join(group, a)
