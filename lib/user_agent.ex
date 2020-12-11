@@ -31,7 +31,7 @@ defmodule User.Agent do
   end
 
   def find(userid) do
-    case Registry.lookup(Session.Registry, userid) do
+    case Registry.lookup(User.Registry, userid) do
       [] -> {:error, :user_not_found}
       [{pid, _}] -> get_active(userid)
     end

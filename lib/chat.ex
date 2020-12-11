@@ -1,34 +1,43 @@
-defmodule Msg do
-  defstruct [:sender, :text,
-    id: Nanoid.generate(),
-    created: :os.system_time,
-    updated: :os.system_time]
-end
-
 defmodule Chat do
-  use Cluster.Agent
-  defstruct [:name, members: %{}, msgs: []]
-  def on_init(name), do: {:ok, %Chat{name: name}}
-
-  def msgs(chat, 0), do: chat.msgs
-  def msgs(chat, from), do: chat.msgs |> Enum.filter(&(&1.updated > from))
-  def count(chat, from), do: msgs(chat, from) |> Enum.count()
-
-  # def get_msgs(name, from \\ 0), do: get(name, :msgs, [from])
-  # def get_count(name, from \\ 0), do: get(name, :count, [from])
-
-  def handle_info({{_name, :add}, {id, msg}}, state) do
-    {:noreply, put_in(state.msgs[id], msg)}
+  use GenServer
+  def start_link(chatid) do
+    GenServer.start_link(__MODULE__, chatid, name: String.to_atom(chatid))
   end
-  def handle_info({{_name, :del}, ids}, state) do
-    {:noreply, update_in(state, [:msgs], &Map.drop(&1, ids))}
+
+  # Callbacks
+  def init(state) do
+    {:ok, state}
   end
-  def handle_info({{_name, :mod}, {id, text}}, state) do
-    {:noreply, update_in(state, [:msgs, id, :text], text)}
+
+  def handle_cast({:send, msg, userid}, chatid) do
+    Chat.Agent.register_message(chatid,userid,msg)
+    for member <- Chat.Agent.find(chatid).members do
+      GenServer.cast(User.Agent.find(member)|>elem(1), {:notify, msg})
+    end
+    {:noreply, chatid}
   end
-  def handle_info({{_name, :ttl}, ttls}, state) do
-    {:noreply, for {id, ttl} <- ttls do
-      update_in(state, [:msgs, id, :ttl], ttl)
-    end}
+
+  def handle_call({:get}, _from, chatid) do
+    {:reply, Chat.Agent.find(chatid),chatid}
+  end
+
+  def handle_cast({:delete_message, messageid},chatid) do
+    Chat.Agent.remove_message(chatid,messageid)
+    {:noreply, chatid}
+  end
+
+  def handle_cast({:update_message, messageid, message},chatid) do
+    Chat.Agent.update_message(chatid,messageid,message)
+    {:noreply, chatid}
+  end
+
+  def handle_cast({:add_admins, admin, guests},chatid) do
+    Chat.Agent.add_admins(chatid,admin,guests)
+    {:noreply, chatid}
+  end
+
+  def handle_cast({:remove_admins, admin, guests},chatid) do
+    Chat.Agent.remove_admins(chatid,admin,guests)
+    {:noreply, chatid}
   end
 end
