@@ -1,8 +1,3 @@
-# GOALS
-# cli
-# replication
-# secure msgs (Task)
-
 # VIEWS
 #   register(user, pass, name \\ user) -> {:exists}
 #   login(user, pass) -> {:missmatch}
@@ -44,6 +39,11 @@ defmodule Cli do
       _ -> state
     end
   end
+  # listen msgs on all chats
+  # unseen = listened + Chat.count(id, from(last_seen), to(first_listened))
+  # add %Group{last_seen}
+  # def join(id), do: Swarm.join({Chat, id}, self())
+  # def leave(id), do: Swarm.join({Chat, id}, self())
   def render(%{page: :home} = state) do
     view do
       label(content: "Counter is #{state.user}")

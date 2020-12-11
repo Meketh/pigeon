@@ -47,34 +47,6 @@ defmodule Swarm.Agent do
       end
       def handle_fetch(state, _), do: state
       defoverridable handle_fetch: 2
-      # def join(id, group), do: Swarm.join({__MODULE__, id, group}, self())
-      # def leave(id, group), do: Swarm.join({__MODULE__, id, group}, self())
-
-      # Agent
-      # def cast(id, fun, args \\ []), do: Agent.cast(via(id), __MODULE__, fun, args)
-      # def handle_cast({:cast, fun}, state), do: {:noreply, run(fun, [state])}
-
-      # def get(id, fun, args \\ []), do: Agent.get(via(id), __MODULE__, fun, args)
-      # def handle_call({:get, fun}, _from, state), do: {:reply, run(fun, [state]), state}
-
-      # def update(id, fun, args \\ []), do: Agent.update(via(id), __MODULE__, fun, args)
-      # def handle_call({:update, fun}, _from, state), do: {:reply, :ok, run(fun, [state])}
-
-      # def get_and_update(id, fun, args \\ []), do: Agent.get_and_update(via(id), __MODULE__, fun, args)
-      # def handle_call({:get_and_update, fun}, _from, state) do
-      #   case run(fun, [state]) do
-      #     {reply, state} -> {:reply, reply, state}
-      #     {reply} -> {:reply, reply, state}
-      #     other -> {:stop, {:bad_return_value, other}, state}
-      #   end
-      # end
-
-      # defp run({m, f, a}, extra), do: apply(m, f, extra ++ a)
-      # defp run(fun, extra), do: apply(fun, extra)
-      # def handle_info(info, {time, state}) do
-      #   IO.inspect({info, {time, state}})
-      #   {:noreply, {time, state}}
-      # end
 
       # Swarm.Callbacks / Handoff: :restart | :ignore | {:resume, handoff}
       def handle_call({:swarm, :begin_handoff}, _from, state), do: {:reply, :restart, state}

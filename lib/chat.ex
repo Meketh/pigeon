@@ -10,16 +10,27 @@ defmodule Chat do
 
   def members(id), do: fetch(id, :members)
   def msgs(id), do: fetch(id, :msgs)
-  def msgs(id, from, to), do: fetch(id, {:msgs, from, to})
+  def msgs(id, from, to \\ :infinity), do: fetch(id, {:msgs, from, to})
+  def count(id, from, to \\ :infinity), do: fetch(id, {:count, from, to})
+  def past_msgs(id, from, count), do: fetch(id, {:past_msgs, from, count})
 
   def handle_fetch(state, :members), do: state.members
   def handle_fetch(state, :msgs), do: state.msgs
   def handle_fetch(state, {:msgs, from, to}) do
-    {from, to} = get_times(state, from, to)
-    for msg <- state.msgs,
-    from <= msg.time,
-    msg.time <= to,
-    do: msg
+    state.msgs
+    |> Enum.map(fn{_, msg}-> msg end)
+    |> Enum.filter(&(from <= &1.time and &1.time <= to))
+  end
+  def handle_fetch(state, {:count, from, to}) do
+    handle_fetch(state, {:msgs, from, to})
+    |> Enum.count()
+  end
+  def handle_fetch(state, {:past_msgs, from, count}) do
+    state.msgs
+    |> Enum.map(fn{_, msg}-> msg end)
+    |> Enum.filter(&(&1.time <= from))
+    |> Enum.sort(&(&1.time > &2.time))
+    |> Enum.take(count)
   end
 
   def join(id, user, role \\ :member), do: emit(id, :join, {user, role})
