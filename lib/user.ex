@@ -3,6 +3,15 @@ defmodule User do
   use Swarm.Agent
   defstruct [:name, :pass, groups: %{}]
   def on_init(id), do: %User{name: id}
+  def handle_conflict({other_time, other}, {time, self}) do
+    self = put_in(self.groups,
+      Map.merge(other.groups, self.groups, &Group.merge/2))
+    if other_time > time do
+      {other_time, put_in(self.pass, other.pass)}
+    else
+      {time, self}
+    end
+  end
 
   def register(user, pass) do
     ok? new(user), do: pass(user, nil, pass)
@@ -40,9 +49,13 @@ defmodule User do
       else group end)
   end
   def handle_event(state, :leave, id) do
-    update_in(state, [:groups], &Map.drop(&1, [id]))
+    state
+    |> put_in([:groups, id, :role], :leave)
+    |> put_in([:groups, id, :updated], :os.system_time)
   end
   def handle_event(state, :seen, {id, time}) do
-    put_in(state.groups[id].last_seen, time)
+    state
+    |> put_in([:groups, id, :last_seen], time)
+    |> put_in([:groups, id, :updated], :os.system_time)
   end
 end

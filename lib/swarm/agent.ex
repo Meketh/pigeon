@@ -7,9 +7,10 @@ defmodule Swarm.Agent do
         GenServer.start_link(__MODULE__, id, ops)
       end
 
-      def init(id), do: {:ok, id, {:continue, :init}}
-      def handle_continue(:init, id) do
+      def init(id), do: {:ok, {0, id}, {:continue, :init}}
+      def handle_continue(:init, {_, id}) do
         prev = fetch(id, :init)
+        # TODO: deadlock vs msg loss
         Swarm.join(group(id), self())
         {:noreply, if prev do prev
           else {0, on_init(id)} end}
@@ -34,8 +35,6 @@ defmodule Swarm.Agent do
       def handle_info({:event, event, data}, {_, state}) do
         {:noreply, {:os.system_time, handle_event(state, event, data)}}
       end
-      def handle_event(state, _, _), do: state
-      defoverridable handle_event: 3
 
       def fetch(id, request) do
         for {time, response} <- Swarm.multi_call(
@@ -48,8 +47,6 @@ defmodule Swarm.Agent do
       def handle_call({:fetch, request}, _from, {time, state}) do
         {:reply, {time, handle_fetch(state, request)}, {time, state}}
       end
-      def handle_fetch(state, _), do: state
-      defoverridable handle_fetch: 2
 
       def task(id, fun, args, seconds) do
         Swarm.Task.register(id,
@@ -57,11 +54,24 @@ defmodule Swarm.Agent do
           :os.system_time + seconds * 1_000_000_000)
       end
 
-      # Swarm.Callbacks / Handoff: :restart | :ignore | {:resume, handoff}
-      def handle_call({:swarm, :begin_handoff}, _from, state), do: {:reply, :restart, state}
-      def handle_cast({:swarm, :end_handoff, _handoff}, state), do: {:noreply, state}
-      def handle_cast({:swarm, :resolve_conflict, _conflict}, state), do: {:noreply, state}
-      def handle_info({:swarm, :die}, state), do: {:stop, :shutdown, state}
+      # Swarm.Callbacks
+      def handle_call({:swarm, :begin_handoff}, _from, state) do
+        # Handoff: :restart | :ignore | {:resume, handoff}
+        {:reply, :restart, state}
+      end
+      def handle_cast({:swarm, :end_handoff, _handoff}, state) do
+        {:noreply, state}
+      end
+
+      def handle_cast({:swarm, :resolve_conflict, other}, state) do
+        {:noreply, handle_conflict(other, state)}
+      end
+      def handle_conflict(_, state), do: state
+      defoverridable handle_conflict: 2
+
+      def handle_info({:swarm, :die}, state) do
+        {:stop, :shutdown, state}
+      end
     end
   end
 end

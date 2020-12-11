@@ -4,9 +4,27 @@ defmodule Chat do
   defmodule Msg do
     defstruct [:sender, :text,
       id: Nanoid.generate(),
-      time: :os.system_time]
+      created: :os.system_time,
+      updated: :os.system_time]
+
+    def new(sender, text) do
+      %Msg{id: Nanoid.generate(),
+        sender: sender, text: text,
+        created: :os.system_time,
+        updated: :os.system_time}
+    end
   end
   def on_init(id), do: %Chat{id: id}
+  def handle_conflict({other_time, other}, {time, self}) do
+    {if other_time > time do other_time else time end,
+      put_in(self.members,
+        Map.merge(self.members, other.members, fn({ta, va}, {tb, vb})->
+          if ta > tb do {ta, va} else {tb, vb} end
+        end))
+      |> put_in([:msgs], Map.merge(self.msgs, other.msgs, fn(a, b)->
+          if a.updated > b.updated do a else b end
+        end))}
+  end
 
   # fetch
   def members(id), do: fetch(id, :members)
@@ -16,12 +34,15 @@ defmodule Chat do
   def past_msgs(id, from, count), do: fetch(id, {:past_msgs, from, count})
 
   # handle_fetch
-  def handle_fetch(state, :members), do: state.members
+  def handle_fetch(state, :members) do
+    for {k, {_, v}} <- state.members,
+    into: %{}, do: {k, v}
+  end
   def handle_fetch(state, :msgs), do: state.msgs
   def handle_fetch(state, {:msgs, from, to}) do
     state.msgs
     |> Enum.map(fn{_, msg}-> msg end)
-    |> Enum.filter(&(from <= &1.time and &1.time <= to))
+    |> Enum.filter(&(from <= &1.created and &1.created <= to))
   end
   def handle_fetch(state, {:count, from, to}) do
     handle_fetch(state, {:msgs, from, to})
@@ -30,8 +51,8 @@ defmodule Chat do
   def handle_fetch(state, {:past_msgs, from, count}) do
     state.msgs
     |> Enum.map(fn{_, msg}-> msg end)
-    |> Enum.filter(&(&1.time <= from))
-    |> Enum.sort(&(&1.time > &2.time))
+    |> Enum.filter(&(&1.created <= from))
+    |> Enum.sort(&(&1.created > &2.created))
     |> Enum.take(count)
   end
 
@@ -39,7 +60,7 @@ defmodule Chat do
   def join(id, user, role \\ :member), do: emit(id, :join, {user, role})
   def leave(id, user), do: emit(id, :leave, user)
   def msg(id, sender, text) do
-    emit(id, :msg, %Msg{sender: sender, text: text})
+    emit(id, :msg, Msg.new(sender, text))
   end
   def mod(id, sender, msg_id, text) do
     emit(id, :mod, {sender, msg_id, text})
@@ -49,17 +70,21 @@ defmodule Chat do
 
   # handle_event
   def handle_event(state, :join, {user, role}) do
-    put_in(state.members[user], role)
+    put_in(state.members[user], {:os.system_time, role})
   end
   def handle_event(state, :leave, user) do
-    update_in(state, [:members], &Map.drop(&1, [user]))
+    msg = Msg.new(:system, "*************** #{user} left ***************")
+    put_in(state.members[user], {:os.system_time, :leave})
+    |> put_in([:msgs, msg.id], msg)
   end
   def handle_event(state, :msg, %{id: id} = msg) do
     put_in(state.msgs[id], msg)
   end
   def handle_event(state, :mod, {sender, msg_id, text}) do
     if sender?(state, sender, msg_id)
-    do put_in(state.msgs[msg_id].text, text)
+    do update_in(state, [:msgs, msg_id, ], &(%{&1|
+      text: text, updated: :os.system_time
+    }))
     else state end
   end
 
@@ -67,7 +92,7 @@ defmodule Chat do
     {from, to} = get_times(state, from, to)
     for msg <- state.msgs, reduce: state do
       state ->
-        if from <= msg.time and msg.time <= to
+        if from <= msg.created and msg.created <= to
         do del_msg(state, sender, msg.id)
         else state end
     end
@@ -92,7 +117,9 @@ defmodule Chat do
   end
   defp del_msg(state, sender, msg_id) do
     if sender?(state, sender, msg_id)
-    do update_in(state, [:msgs, msg_id], &put_in(&1.text, :deleted))
+    do update_in(state, [:msgs, msg_id], &(%{&1|
+      text: :deleted, updated: :os.system_time
+    }))
     else state end
   end
 

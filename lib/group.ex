@@ -1,27 +1,37 @@
 defmodule Group do
   defstruct [:name,
+    role: :admin,
     id: Nanoid.generate(),
     last_seen: :os.system_time,
-    role: :admin]
+    updated: :os.system_time]
+
+  def merge(a, b) do
+    if a.updated > b.updated, do: a, else: b
+  end
 
   def pm_id(a, b), do: Enum.sort([a, b])
   def new_pm(a, b) do
     group = %Group{
       id: pm_id(a, b),
-      role: :member}
+      role: :member,
+      updated: :os.system_time}
     new_chat(group.id)
     join(group, a)
     join(group, b)
   end
   def new(name, admin) do
-    group = %Group{name: name}
+    group = %Group{name: name,
+      id: Nanoid.generate(),
+      updated: :os.system_time}
     new_chat(group.id)
     join(group, admin)
   end
 
   def add(%{role: role}, _) when role != :admin, do: {:error, :not_admin}
   def add(%Group{id: id, name: name}, user, role \\ :member) do
-    %Group{id: id, name: name, role: role}
+    %Group{id: id,
+      name: name, role: role,
+      updated: :os.system_time}
     |> join(user)
   end
 
