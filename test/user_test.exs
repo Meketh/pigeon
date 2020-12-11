@@ -4,7 +4,6 @@ defmodule User.Test do
 
   setup_all do
     User.register(Papo, :pass)
-    Process.sleep 1_000 # TODO: replica quorum
   end
 
   test "register" do
