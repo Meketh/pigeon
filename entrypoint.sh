@@ -11,7 +11,7 @@ else
   if [ "$2" = "test" ]; then
     watch_cmd "$COOKIE --name pigeon@0.0.0.0 -S mix test"
   elif [ "$2" = "cli" ]; then
-    sh -c "iex $COOKIE --name cli@$(date +%s%N) --remsh pigeon@0.0.0.0"
+    sh -c "iex $COOKIE --name cli-$(date +%s%N)@$(date +%s%N) --remsh pigeon@0.0.0.0"
   else
     export MIX_ENV=prod
     sh -c "iex $COOKIE --name pigeon@0.0.0.0 -S mix $2"

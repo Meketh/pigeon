@@ -8,18 +8,22 @@ defmodule Swarm.Task do
 
   def register(id, m, f, a, t \\ 0) do
     SS.unregister(id)
-    SS.register(child_spec([m, f, a, t]))
+    unless t == :infinity,
+    do: SS.register(child_spec([m, f, a, t]))
   end
   def register(id, f, t \\ 0) do
     SS.unregister(id)
-    SS.register(child_spec([f, t]))
+    unless t == :infinity,
+    do: SS.register(child_spec([f, t]))
   end
 
   def start_link(m, f, a, t \\ 0) do
-    Task.start_link(__MODULE__, :run, [m, f, a, t])
+    unless t == :infinity,
+    do: Task.start_link(__MODULE__, :run, [m, f, a, t])
   end
   def start_link(f, t \\ 0) do
-    Task.start_link(__MODULE__, :run, [f, t])
+    unless t == :infinity,
+    do: Task.start_link(__MODULE__, :run, [f, t])
   end
 
   def run(m, f, a, t \\ 0) do
