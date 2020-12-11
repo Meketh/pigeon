@@ -18,8 +18,13 @@ defmodule User.Test do
 
   test "add" do
     assert User.login(Papo, :pass) == :ok
-    assert User.add(Papo,Pepe) == :ok
-    assert Chat.msg(Enum.sort([Papo, Pepe]), Papo, "hola")  == :ok
+    assert Group.new_pm(Papo,Pepe) == :ok
+    group_id = Group.pm_id(Papo, Pepe)
+    assert Chat.msg(group_id, Papo, "hola")  == :ok
+    assert Chat.msgs(group_id) |> Map.keys |> length == 1
+
+    assert Chat.msg(group_id, Papo, "estas?")  == :ok
+    # assert Chat.msgs(group_id) |> Map.keys |> length == 2
 
     # assert User.send(Papo,groupid,)
   end
