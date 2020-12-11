@@ -18,10 +18,9 @@ defmodule Pigeon.MixProject do
       {:local_cluster, "~> 1.2.1", only: [:none]},
       {:schism, "~> 1.0.1", only: [:test]},
       {:flex_logger, "~> 0.2.1"},
+      {:ratatouille, "~> 0.5.1"},
       {:peerage, "~> 1.0.3"},
       {:swarm, "~> 3.4.0"},
-      {:horde, "~> 0.8.3"},
-      {:delta_crdt, "~> 0.5.10"},
       {:nanoid, "~> 2.0.4"},
     ]]
   end

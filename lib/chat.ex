@@ -6,7 +6,7 @@ defmodule Msg do
 end
 
 defmodule Chat do
-  use Cluster.Agent
+  use Swarm.Agent
   defstruct [:name, members: %{}, msgs: []]
   def on_init(name), do: {:ok, %Chat{name: name}}
 

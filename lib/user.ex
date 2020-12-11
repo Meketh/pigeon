@@ -1,3 +1,4 @@
+import Macros
 defmodule Group do
   defstruct [:name,
     role: :admin, # :member
@@ -6,22 +7,26 @@ defmodule Group do
 end
 
 defmodule User do
-  use Cluster.Agent
+  use Swarm.Agent
   defstruct [:name, :pass, groups: %{}]
-  def on_init(id), do: %User{name: id}
+  def on_init(name), do: %User{name: name}
 
-  def set_pass(id, pass), do: emit(id, {:set_pass, pass})
-  def handle_info({:set_pass, pass}, state) do
-    IO.puts(["SARASA", pass, state, put_in(state.pass, pass)])
-    {:noreply, put_in(state.pass, pass)}
+  def register(user, pass) do
+    ok? User.new(user),
+    do: User.pass(user, pass)
+  end
+  def login(user, pass) do
+    if User.pass(user) == pass, do: :ok,
+    else: {:error, :user_pass_missmatch}
   end
 
-  def handle_info(info, state) do
-    IO.puts({info, state})
-    {:noreply, state}
+  def pass(name), do: fetch(name, :pass)
+  def handle_fetch(state, :pass), do: state.pass
+  def pass(name, pass), do: emit(name, :pass, pass)
+  def handle_event(state, :pass, pass), do: put_in(state.pass, pass)
+
+  def handle_info(info, {time, state}) do
+    IO.inspect({info, {time, state}})
+    {:noreply, {time, state}}
   end
 end
-
-# handle_info({group, event}, state)
-# {:ok, %User{name: name}, {:continue, {:init, name}}}
-# handle_continue({:init, name}, state)
