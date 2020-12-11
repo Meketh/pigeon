@@ -1,6 +1,5 @@
 ## Pendiente
 
-- secure msgs (Task)
 - tests
 - :init_replicas
 - cli

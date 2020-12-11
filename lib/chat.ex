@@ -7,12 +7,14 @@ defmodule Chat do
       time: :os.system_time]
   end
   def on_init(id), do: %Chat{id: id}
+
   # fetch
   def members(id), do: fetch(id, :members)
   def msgs(id), do: fetch(id, :msgs)
   def msgs(id, from, to \\ :infinity), do: fetch(id, {:msgs, from, to})
   def count(id, from, to \\ :infinity), do: fetch(id, {:count, from, to})
   def past_msgs(id, from, count), do: fetch(id, {:past_msgs, from, count})
+
   # handle_fetch
   def handle_fetch(state, :members), do: state.members
   def handle_fetch(state, :msgs), do: state.msgs
@@ -32,6 +34,7 @@ defmodule Chat do
     |> Enum.sort(&(&1.time > &2.time))
     |> Enum.take(count)
   end
+
   # emit
   def join(id, user, role \\ :member), do: emit(id, :join, {user, role})
   def leave(id, user), do: emit(id, :leave, user)
@@ -43,6 +46,7 @@ defmodule Chat do
   end
   def del(id, sender, from, to), do: emit(id, :del, {sender, from, to})
   def del(id, sender, ids), do: emit(id, :del, {sender, ids})
+
   # handle_event
   def handle_event(state, :join, {user, role}) do
     put_in(state.members[user], role)
@@ -74,6 +78,15 @@ defmodule Chat do
     end
   end
 
+  # task
+  def ttl(id, sender, from, to, ttl) do
+    task({:ttl, id}, :del, [id, sender, from, to], ttl)
+  end
+  def ttl(id, sender, ids, ttl) do
+    task({:ttl, id}, :del, [id, sender, ids], ttl)
+  end
+
+  # private
   defp sender?(state, sender, msg_id) do
     get_in(state, [:msgs, msg_id, :sender]) == sender
   end

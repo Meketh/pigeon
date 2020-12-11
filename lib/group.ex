@@ -31,6 +31,7 @@ defmodule Group do
     Chat.leave(id, user)
   end
 
+  # private
   defp join(%{id: id, role: role} = group, user) do
     User.join(user, group)
     Chat.join(id, user, role)

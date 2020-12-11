@@ -48,6 +48,12 @@ defmodule Swarm.Agent do
       def handle_fetch(state, _), do: state
       defoverridable handle_fetch: 2
 
+      def task(id, fun, args, seconds) do
+        Swarm.Task.register(id,
+          __MODULE__, fun, args,
+          :os.system_time + seconds * 1_000_000_000)
+      end
+
       # Swarm.Callbacks / Handoff: :restart | :ignore | {:resume, handoff}
       def handle_call({:swarm, :begin_handoff}, _from, state), do: {:reply, :restart, state}
       def handle_cast({:swarm, :end_handoff, _handoff}, state), do: {:noreply, state}
