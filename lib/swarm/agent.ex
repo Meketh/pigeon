@@ -9,9 +9,12 @@ defmodule Swarm.Agent do
 
       def init(id), do: {:ok, id, {:continue, :init}}
       def handle_continue(:init, id) do
+        prev = fetch(id, :init)
         Swarm.join(group(id), self())
-        {:noreply, {0, on_init(id)}}
+        {:noreply, if prev do prev
+          else {0, on_init(id)} end}
       end
+      def handle_fetch(state, :init), do: state
       def on_init(id), do: %{id: id}
       defoverridable on_init: 1
 
@@ -47,6 +50,12 @@ defmodule Swarm.Agent do
       end
       def handle_fetch(state, _), do: state
       defoverridable handle_fetch: 2
+
+      def task(id, fun, args, seconds) do
+        Swarm.Task.register(id,
+          __MODULE__, fun, args,
+          :os.system_time + seconds * 1_000_000_000)
+      end
 
       # Swarm.Callbacks / Handoff: :restart | :ignore | {:resume, handoff}
       def handle_call({:swarm, :begin_handoff}, _from, state), do: {:reply, :restart, state}

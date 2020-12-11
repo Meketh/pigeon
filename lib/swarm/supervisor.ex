@@ -29,4 +29,8 @@ defmodule Swarm.Supervisor do
     Swarm.register_name(child_spec.id,
       Swarm.Supervisor, :start_child, [child_spec], 5_000)
   end
+
+  def unregister(id) do
+    Swarm.unregister_name(id)
+  end
 end
