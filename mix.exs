@@ -15,7 +15,7 @@ defmodule Pigeon.MixProject do
       run: "run --no-halt",
     ],
     deps: [
-      {:local_cluster, "~> 1.2.1", only: [:none]},
+      {:local_cluster, "~> 1.2.1", only: [:test]},
       {:schism, "~> 1.0.1", only: [:test]},
       {:flex_logger, "~> 0.2.1"},
       {:ratatouille, "~> 0.5.1"},

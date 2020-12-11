@@ -15,4 +15,15 @@ defmodule User.Test do
     assert User.login(Papo, :pass) == :ok
     assert User.login(Papo, :no) == {:error, :user_pass_missmatch}
   end
+
+  test "change pass" do
+    assert User.register(Sapo, :sarasa) == :ok
+    assert User.login(Sapo, :sarasa) == :ok
+
+    assert User.pass(Sapo, :sarasa, :pass) == :ok
+    assert User.login(Sapo, :pass) == :ok
+
+    assert User.pass(Sapo, :sarasa, :error) == :ok
+    assert User.login(Sapo, :error) == {:error, :user_pass_missmatch}
+  end
 end

@@ -23,6 +23,7 @@ defmodule Group do
     %Group{id: id, name: name, role: :member}
     |> join(user)
   end
+
   def remove(%{role: role}, _) when role != :admin, do: {:error, :not_admin}
   def remove(%Group{id: id}, user) do
     User.leave(user, id)

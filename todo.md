@@ -3,9 +3,10 @@
 - darle privilegios de administrador a otros usuarios
 - borrar cualquier mensaje
 - secure msgs (Task)
-- :resolve_conflict
 - tests
+- :init_replicas
 - cli
+- :resolve_conflict
 
 ## Entrega Final
 

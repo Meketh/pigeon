@@ -7,13 +7,13 @@ defmodule Chat do
       time: :os.system_time]
   end
   def on_init(id), do: %Chat{id: id}
-
+  # fetch
   def members(id), do: fetch(id, :members)
   def msgs(id), do: fetch(id, :msgs)
   def msgs(id, from, to \\ :infinity), do: fetch(id, {:msgs, from, to})
   def count(id, from, to \\ :infinity), do: fetch(id, {:count, from, to})
   def past_msgs(id, from, count), do: fetch(id, {:past_msgs, from, count})
-
+  # handle_fetch
   def handle_fetch(state, :members), do: state.members
   def handle_fetch(state, :msgs), do: state.msgs
   def handle_fetch(state, {:msgs, from, to}) do
@@ -32,7 +32,7 @@ defmodule Chat do
     |> Enum.sort(&(&1.time > &2.time))
     |> Enum.take(count)
   end
-
+  # emit
   def join(id, user, role \\ :member), do: emit(id, :join, {user, role})
   def leave(id, user), do: emit(id, :leave, user)
   def msg(id, sender, text) do
@@ -41,7 +41,7 @@ defmodule Chat do
   def mod(id, msg_id, text), do: emit(id, :mod, {msg_id, text})
   def del(id, from, to), do: emit(id, :del, {from, to})
   def del(id, ids), do: emit(id, :del, ids)
-
+  # handle_event
   def handle_event(state, :join, {user, role}) do
     put_in(state.members[user], role)
   end

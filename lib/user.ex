@@ -5,27 +5,31 @@ defmodule User do
   def on_init(id), do: %User{name: id}
 
   def register(user, pass) do
-    ok? User.new(user),
-    do: User.pass(user, pass)
+    ok? new(user),
+    do: pass(user, nil, pass)
   end
   def login(user, pass) do
-    if User.pass(user) == pass, do: :ok,
+    if pass(user) == pass, do: :ok,
     else: {:error, :user_pass_missmatch}
   end
   def add(a, b), do: Group.new({a, b})
-
-  def pass(id), do: fetch(id, :pass)
+  # fetch
+  defp pass(id), do: fetch(id, :pass)
   def groups(id), do: fetch(id, :groups)
-
+  # handle_fetch
   def handle_fetch(state, :pass), do: state.pass
   def handle_fetch(state, :groups), do: state.groups
-
-  def pass(id, pass), do: emit(id, :pass, pass)
+  # emit
+  def pass(id, old_pass, pass), do: emit(id, :pass, {old_pass, pass})
   def join(id, group), do: emit(id, :join, group)
   def leave(id, group_id), do: emit(id, :leave, group_id)
   def seen(id, group_id, time), do: emit(id, :seen, {group_id, time})
-
-  def handle_event(state, :pass, pass), do: put_in(state.pass, pass)
+  # handle_event
+  def handle_event(state, :pass, {old_pass, pass}) do
+    if old_pass == state.pass,
+    do: put_in(state.pass, pass),
+    else: state
+  end
   def handle_event(state, :join, group) do
     put_in(state.groups[group.id], group)
   end
