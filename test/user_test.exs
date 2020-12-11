@@ -11,10 +11,10 @@ defmodule User.Test do
     assert User.register(Pepe, :pituto) == {:error, :already_registered}
   end
 
-  # test "login" do
-  #   assert User.login(Papo, :pass) == :ok
-  #   assert User.login(Papo, :no) == {:error, :user_pass_missmatch}
-  # end
+  test "login" do
+    assert User.login(Papo, :pass) == :ok
+    assert User.login(Papo, :no) == {:error, :user_pass_missmatch}
+  end
 
   test "add" do
     assert User.login(Papo, :pass) == :ok
