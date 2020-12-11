@@ -1,34 +1,60 @@
 defmodule Msg do
   defstruct [:sender, :text,
     id: Nanoid.generate(),
-    created: :os.system_time,
-    updated: :os.system_time]
+    time: :os.system_time]
 end
 
 defmodule Chat do
   use Swarm.Agent
-  defstruct [:name, members: %{}, msgs: []]
-  def on_init(name), do: {:ok, %Chat{name: name}}
+  defstruct [:id, members: %{}, msgs: %{}]
+  def on_init(id), do: {:ok, %Chat{id: id}}
 
-  def msgs(chat, 0), do: chat.msgs
-  def msgs(chat, from), do: chat.msgs |> Enum.filter(&(&1.updated > from))
-  def count(chat, from), do: msgs(chat, from) |> Enum.count()
+  def msgs(id), do: fetch(id, :msgs)
+  def msgs(id, from, to), do: fetch(id, {:msgs, from, to})
 
-  # def get_msgs(name, from \\ 0), do: get(name, :msgs, [from])
-  # def get_count(name, from \\ 0), do: get(name, :count, [from])
+  def handle_fetch(state, :msgs), do: state.msgs
+  def handle_fetch(state, {:msgs, from, to}) do
+    {from, to} = get_times(state, from, to)
+    for msg <- state.msgs,
+    from <= msg.time,
+    msg.time <= to,
+    do: msg
+  end
 
-  def handle_info({{_name, :add}, {id, msg}}, state) do
-    {:noreply, put_in(state.msgs[id], msg)}
+  def add(id, msg), do: emit(id, :add, msg)
+  def mod(id, msg_id, text), do: emit(id, :mod, {msg_id, text})
+  def del(id, from, to), do: emit(id, :del, {from, to})
+  def del(id, ids), do: emit(id, :del, ids)
+
+  def handle_event(state, :add, %{id: id} = msg) do
+    put_in(state.msgs[id], msg)
   end
-  def handle_info({{_name, :del}, ids}, state) do
-    {:noreply, update_in(state, [:msgs], &Map.drop(&1, ids))}
+  def handle_event(state, :mod, {id, text}) do
+    put_in(state.msgs[id].text, text)
   end
-  def handle_info({{_name, :mod}, {id, text}}, state) do
-    {:noreply, update_in(state, [:msgs, id, :text], text)}
+
+  def handle_event(state, :del, {from, to}) do
+    {from, to} = get_times(state, from, to)
+    for msg <- state.msgs, reduce: state do
+      state -> if from <= msg.time and msg.time do
+        update_in(state, [:msgs, msg.id], &put_in(&1.text, :deleted))
+      else state end
+    end
   end
-  def handle_info({{_name, :ttl}, ttls}, state) do
-    {:noreply, for {id, ttl} <- ttls do
-      update_in(state, [:msgs, id, :ttl], ttl)
-    end}
+  def handle_event(state, :del, ids) do
+    for id <- ids, reduce: state do
+      state -> update_in(state, [:msgs, id], &put_in(&1.text, :deleted))
+    end
+  end
+
+  defp get_times(state, from, to) do
+    {get_time(state, from, 0),
+    get_time(state, to, :infinity)}
+  end
+  defp get_time(state, id, default) do
+    case get_in(state, [:msgs, id, :time]) do
+      nil -> default
+      time -> time
+    end
   end
 end
