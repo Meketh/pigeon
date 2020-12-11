@@ -16,14 +16,13 @@ defmodule User.Test do
     assert User.login(Papo, :no) == {:error, :user_pass_missmatch}
   end
 
-  test "change pass" do
-    assert User.register(Sapo, :sarasa) == :ok
-    assert User.login(Sapo, :sarasa) == :ok
+  test "add" do
+    assert User.login(Papo, :pass) == :ok
+    assert User.add(Papo,Pepe) == :ok
+    assert Chat.msg(Enum.sort([Papo, Pepe]), Papo, "hola")  == :ok
 
-    assert User.pass(Sapo, :sarasa, :pass) == :ok
-    assert User.login(Sapo, :pass) == :ok
-
-    assert User.pass(Sapo, :sarasa, :error) == :ok
-    assert User.login(Sapo, :error) == {:error, :user_pass_missmatch}
+    # assert User.send(Papo,groupid,)
   end
+
+
 end
