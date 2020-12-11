@@ -9,9 +9,12 @@ defmodule Swarm.Agent do
 
       def init(id), do: {:ok, id, {:continue, :init}}
       def handle_continue(:init, id) do
+        prev = fetch(id, :init)
         Swarm.join(group(id), self())
-        {:noreply, {0, on_init(id)}}
+        {:noreply, if prev do prev
+          else {0, on_init(id)} end}
       end
+      def handle_fetch(state, :init), do: state
       def on_init(id), do: %{id: id}
       defoverridable on_init: 1
 

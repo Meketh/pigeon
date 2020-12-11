@@ -1,9 +1,8 @@
 ## Pendiente
 
-- tests
-- :init_replicas
-- cli
 - :resolve_conflict
+- tests
+- cli
 
 ## Entrega Final
 
