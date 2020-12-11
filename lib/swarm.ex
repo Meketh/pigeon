@@ -12,6 +12,7 @@ defmodule Swarm.Supervisor do
       {:error, {:already_registered, _pid}} ->
         {:error, :already_exists}
       other -> other
+      # other -> IO.inspect other
     end
   end
   def whereis(id) do
@@ -21,8 +22,9 @@ defmodule Swarm.Supervisor do
     end
   end
 
-  def join(group) do: Swarm.join(group, self())
-  def leave(group) do: Swarm.leave(group, self())
+  def join(group), do: Swarm.join(group, self())
+  def leave(group), do: Swarm.leave(group, self())
+  def emit(group, msg), do: Swarm.publish(group, msg)
 end
 
 defmodule Swarm.Distribution do

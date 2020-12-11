@@ -21,14 +21,9 @@ defmodule Cluster.Supervisor do
     end
   end
 
-  def join(groups) do
-    for g <- groups,
-    do: @cluster.Supervisor.join(g)
-  end
-  def leave(events) do
-    for g <- groups,
-    do: @cluster.Supervisor.leave(g)
-  end
+  def join(group), do: @cluster.Supervisor.join(group)
+  def leave(group), do: @cluster.Supervisor.leave(group)
+  def emit(group, event), do: @cluster.Supervisor.emit(group, event)
 end
 
 defmodule Cluster.Distribution do
@@ -40,6 +35,10 @@ defmodule Cluster.Distribution do
       rest -> key_to_node(rest, {id, replica - 1})
     end
   end
+  def key_to_node(nodes, key) do
+    [m, i, r] = String.split(key)
+    key_to_node(nodes, {{m, i}, r})
+  end
   def id_to_node(nodes, id) do
     HashRing.new()
     |> HashRing.add_nodes(nodes)
@@ -48,17 +47,21 @@ defmodule Cluster.Distribution do
 end
 
 defmodule Cluster.Agent do
+  alias Cluster.Supervisor, as: CS
   defmacro __using__(_opts) do
     quote do
       use GenServer
       def start_link(id, ops \\ []) do
-        GenServer.start_link(__MODULE__, [id], ops)
+        GenServer.start_link(__MODULE__, id, ops)
       end
-      def init(id) do
-        Cluster.Supervisor.join({__MODULE__, id})
-        {:ok, %__MODULE__{id: id}}
+      def init(id), do: {:ok, id, {:continue, :init}}
+      def handle_continue(:init, id) do
+        IO.inspect id
+        IO.inspect CS.join({__MODULE__, id})
+        {:noreply, on_init(id)}
       end
-      defoverridable init: 1
+      def on_init(id), do: {:ok, %{id: id}}
+      defoverridable on_init: 1
       def child_spec(id) do
         %{id: {__MODULE__, id},
         shutdown: 10_000,
@@ -66,19 +69,18 @@ defmodule Cluster.Agent do
         start: {__MODULE__, :start_link, [id]}}
       end
 
-      # Cluster
-      def new(id), do: Cluster.Supervisor.register(child_spec(id))
-      def exists(id), do: Cluster.Supervisor.exists({__MODULE__, id})
-      def join(id, events) do
-        for e <- events,
-        do: {__MODULE__, id, e}
-        |> Cluster.Supervisor.join()
-      end
-      def leave(id, events) do
-        for e <- events,
-        do: {__MODULE__, id, e}
-        |> Cluster.Supervisor.leave()
-      end
+      # Cluster.Supervisor
+      def new(id), do: CS.register(child_spec(id))
+      def exists(id), do: CS.exists({__MODULE__, id})
+      def emit(id, event), do: CS.emit({__MODULE__, id}, event)
+      # def join(id, events) do
+      #   for e <- events,
+      #   do: CS.join({__MODULE__, id, e})
+      # end
+      # def leave(id, events) do
+      #   for e <- events,
+      #   do: CS.leave({__MODULE__, id, e})
+      # end
 
       # Agent
       # def cast(id, fun, args \\ []), do: Agent.cast(via(id), __MODULE__, fun, args)

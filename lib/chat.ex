@@ -7,16 +7,12 @@ end
 
 defmodule Chat do
   use Cluster.Agent
-
   defstruct [:name, members: %{}, msgs: []]
+  def on_init(name), do: {:ok, %Chat{name: name}}
+
   def msgs(chat, 0), do: chat.msgs
   def msgs(chat, from), do: chat.msgs |> Enum.filter(&(&1.updated > from))
   def count(chat, from), do: msgs(chat, from) |> Enum.count()
-
-  def init(name) do
-    # join_events(name, events)
-    {:ok, %Chat{name: name}}
-  end
 
   # def get_msgs(name, from \\ 0), do: get(name, :msgs, [from])
   # def get_count(name, from \\ 0), do: get(name, :count, [from])
