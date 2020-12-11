@@ -19,8 +19,8 @@ defmodule Group do
   end
 
   def add(%{role: role}, _) when role != :admin, do: {:error, :not_admin}
-  def add(%Group{id: id, name: name}, user) do
-    %Group{id: id, name: name, role: :member}
+  def add(%Group{id: id, name: name}, user, role \\ :member) do
+    %Group{id: id, name: name, role: role}
     |> join(user)
   end
 

@@ -1,6 +1,5 @@
 ## Pendiente
-
-- darle privilegios de administrador a otros usuarios
+dar privilegios de administrador a otros usuarios
 - borrar cualquier mensaje
 - secure msgs (Task)
 - tests

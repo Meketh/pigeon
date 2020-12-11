@@ -31,7 +31,11 @@ defmodule User do
     else: state
   end
   def handle_event(state, :join, group) do
-    put_in(state.groups[group.id], group)
+    last_seen = get_in(state, [:groups, group.id, :last_seen])
+    put_in(state.groups[group.id],
+      if last_seen,
+      do: put_in(group.last_seen, last_seen),
+      else: group)
   end
   def handle_event(state, :leave, id) do
     update_in(state, [:groups], &Map.drop(&1, [id]))
