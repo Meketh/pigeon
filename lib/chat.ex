@@ -38,9 +38,11 @@ defmodule Chat do
   def msg(id, sender, text) do
     emit(id, :msg, %Msg{sender: sender, text: text})
   end
-  def mod(id, msg_id, text), do: emit(id, :mod, {msg_id, text})
-  def del(id, from, to), do: emit(id, :del, {from, to})
-  def del(id, ids), do: emit(id, :del, ids)
+  def mod(id, sender, msg_id, text) do
+    emit(id, :mod, {sender, msg_id, text})
+  end
+  def del(id, sender, from, to), do: emit(id, :del, {sender, from, to})
+  def del(id, sender, ids), do: emit(id, :del, {sender, ids})
   # handle_event
   def handle_event(state, :join, {user, role}) do
     put_in(state.members[user], role)
@@ -51,22 +53,34 @@ defmodule Chat do
   def handle_event(state, :msg, %{id: id} = msg) do
     put_in(state.msgs[id], msg)
   end
-  def handle_event(state, :mod, {id, text}) do
-    put_in(state.msgs[id].text, text)
+  def handle_event(state, :mod, {sender, msg_id, text}) do
+    if sender?(state, sender, msg_id)
+    do put_in(state.msgs[msg_id].text, text)
+    else state end
   end
 
-  def handle_event(state, :del, {from, to}) do
+  def handle_event(state, :del, {sender, from, to}) do
     {from, to} = get_times(state, from, to)
     for msg <- state.msgs, reduce: state do
-      state -> if from <= msg.time and msg.time <= to do
-        update_in(state, [:msgs, msg.id], &put_in(&1.text, :deleted))
-      else state end
+      state ->
+        if from <= msg.time and msg.time <= to
+        do del_msg(state, sender, msg.id)
+        else state end
     end
   end
-  def handle_event(state, :del, ids) do
+  def handle_event(state, :del, {sender, ids}) do
     for id <- ids, reduce: state do
-      state -> update_in(state, [:msgs, id], &put_in(&1.text, :deleted))
+      state -> del_msg(state, sender, id)
     end
+  end
+
+  defp sender?(state, sender, msg_id) do
+    get_in(state, [:msgs, msg_id, :sender]) == sender
+  end
+  defp del_msg(state, sender, msg_id) do
+    if sender?(state, sender, msg_id)
+    do update_in(state, [:msgs, msg_id], &put_in(&1.text, :deleted))
+    else state end
   end
 
   defp get_times(state, from, to) do

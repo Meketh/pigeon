@@ -5,8 +5,7 @@ defmodule User do
   def on_init(id), do: %User{name: id}
 
   def register(user, pass) do
-    ok? new(user),
-    do: pass(user, nil, pass)
+    ok? new(user), do: pass(user, nil, pass)
   end
   def login(user, pass) do
     if pass(user) == pass, do: :ok,
@@ -26,16 +25,16 @@ defmodule User do
   def seen(id, group_id, time), do: emit(id, :seen, {group_id, time})
   # handle_event
   def handle_event(state, :pass, {old_pass, pass}) do
-    if old_pass == state.pass,
-    do: put_in(state.pass, pass),
-    else: state
+    if old_pass == state.pass
+    do put_in(state.pass, pass)
+    else state end
   end
   def handle_event(state, :join, group) do
     last_seen = get_in(state, [:groups, group.id, :last_seen])
     put_in(state.groups[group.id],
-      if last_seen,
-      do: put_in(group.last_seen, last_seen),
-      else: group)
+      if last_seen
+      do put_in(group.last_seen, last_seen)
+      else group end)
   end
   def handle_event(state, :leave, id) do
     update_in(state, [:groups], &Map.drop(&1, [id]))

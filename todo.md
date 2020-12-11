@@ -1,6 +1,5 @@
 ## Pendiente
-dar privilegios de administrador a otros usuarios
-- borrar cualquier mensaje
+
 - secure msgs (Task)
 - tests
 - :init_replicas
