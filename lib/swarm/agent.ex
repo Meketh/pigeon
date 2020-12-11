@@ -71,6 +71,10 @@ defmodule Swarm.Agent do
 
       # defp run({m, f, a}, extra), do: apply(m, f, extra ++ a)
       # defp run(fun, extra), do: apply(fun, extra)
+      # def handle_info(info, {time, state}) do
+      #   IO.inspect({info, {time, state}})
+      #   {:noreply, {time, state}}
+      # end
 
       # Swarm.Callbacks / Handoff: :restart | :ignore | {:resume, handoff}
       def handle_call({:swarm, :begin_handoff}, _from, state), do: {:reply, :restart, state}

@@ -1,13 +1,5 @@
-import Macros
-defmodule Group do
-  defstruct [:name,
-    id: Nanoid.generate(),
-    role: :admin, # :member
-    unreads: 0,
-    last: :os.system_time]
-end
-
 defmodule User do
+  import Macros
   use Swarm.Agent
   defstruct [:name, :pass, groups: %{}]
   def on_init(id), do: %User{name: id}
@@ -20,22 +12,18 @@ defmodule User do
     if User.pass(user) == pass, do: :ok,
     else: {:error, :user_pass_missmatch}
   end
+  def add(a, b), do: Group.new({a, b})
 
   def pass(id), do: fetch(id, :pass)
+  def groups(id), do: fetch(id, :groups)
 
   def handle_fetch(state, :pass), do: state.pass
+  def handle_fetch(state, :groups), do: state.groups
 
   def pass(id, pass), do: emit(id, :pass, pass)
-  def new_group(id, name), do: emit(id, :new_group, name)
 
   def handle_event(state, :pass, pass), do: put_in(state.pass, pass)
-  def handle_event(state, :new_group, name) do
-    group = %Group{name: name}
+  def handle_event(state, :join, group) do
     put_in(state.groups[group.id], group)
   end
-
-  # def handle_info(info, {time, state}) do
-  #   IO.inspect({info, {time, state}})
-  #   {:noreply, {time, state}}
-  # end
 end

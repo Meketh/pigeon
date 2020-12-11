@@ -1,17 +1,18 @@
-defmodule Msg do
-  defstruct [:sender, :text,
-    id: Nanoid.generate(),
-    time: :os.system_time]
-end
-
 defmodule Chat do
   use Swarm.Agent
-  defstruct [:id, members: %{}, msgs: %{}]
-  def on_init(id), do: {:ok, %Chat{id: id}}
+  defstruct [:id, :name, members: %{}, msgs: %{}]
+  defmodule Msg do
+    defstruct [:sender, :text,
+      id: Nanoid.generate(),
+      time: :os.system_time]
+  end
+  def on_init(id), do: %Chat{id: id}
 
+  def members(id), do: fetch(id, :members)
   def msgs(id), do: fetch(id, :msgs)
   def msgs(id, from, to), do: fetch(id, {:msgs, from, to})
 
+  def handle_fetch(state, :members), do: state.members
   def handle_fetch(state, :msgs), do: state.msgs
   def handle_fetch(state, {:msgs, from, to}) do
     {from, to} = get_times(state, from, to)
@@ -21,12 +22,22 @@ defmodule Chat do
     do: msg
   end
 
-  def add(id, msg), do: emit(id, :add, msg)
+  def join(id, user, role \\ :member), do: emit(id, :join, {user, role})
+  def leave(id, user), do: emit(id, :leave, user)
+  def msg(id, sender, text) do
+    emit(id, :msg, %Msg{sender: sender, text: text})
+  end
   def mod(id, msg_id, text), do: emit(id, :mod, {msg_id, text})
   def del(id, from, to), do: emit(id, :del, {from, to})
   def del(id, ids), do: emit(id, :del, ids)
 
-  def handle_event(state, :add, %{id: id} = msg) do
+  def handle_event(state, :join, {user, role}) do
+    put_in(state.members[user], role)
+  end
+  def handle_event(state, :leave, user) do
+    update_in(state, [:members], &Map.drop(&1, [user]))
+  end
+  def handle_event(state, :msg, %{id: id} = msg) do
     put_in(state.msgs[id], msg)
   end
   def handle_event(state, :mod, {id, text}) do
@@ -36,7 +47,7 @@ defmodule Chat do
   def handle_event(state, :del, {from, to}) do
     {from, to} = get_times(state, from, to)
     for msg <- state.msgs, reduce: state do
-      state -> if from <= msg.time and msg.time do
+      state -> if from <= msg.time and msg.time <= to do
         update_in(state, [:msgs, msg.id], &put_in(&1.text, :deleted))
       else state end
     end

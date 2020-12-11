@@ -1,5 +1,4 @@
 # GOALS
-# statem
 # cli
 # replication
 # secure msgs (Task)
@@ -16,14 +15,14 @@ defmodule Cli do
   @behaviour Ratatouille.App
   import Ratatouille.View
   import Ratatouille.Constants
-  @up key(:arrow_up)
-  @down key(:arrow_down)
-  @left key(:arrow_left)
-  @right key(:arrow_right)
-  @arrows [@up, @down, @left, @right]
-  @space key(:space)
-  @back key(:backspace)
-  @delete key(:delete)
+  # @up key(:arrow_up)
+  # @down key(:arrow_down)
+  # @left key(:arrow_left)
+  # @right key(:arrow_right)
+  # @arrows [@up, @down, @left, @right]
+  # @space key(:space)
+  # @back key(:backspace)
+  # @delete key(:delete)
   @esc key(:esc)
   defstruct [:user, page: :home]
   def run(), do: Ratatouille.run(Cli, quit_events: [{:key, @esc}])
