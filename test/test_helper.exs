@@ -9,6 +9,7 @@ defmodule Test.Case do
       import unquote(subject)
     end
   end
+  def wait(), do: Process.sleep(5000)
 end
 Application.ensure_all_started(:pigeon)
 ExUnit.start()

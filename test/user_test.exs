@@ -30,34 +30,30 @@ defmodule User.Test do
     assert %{^id => %{id: ^id, name: nil}} = groups(Seen)
   end
 
-  # test "join to group" do
-  #   User.register(Sapo, :sarasa)
+  test "join to group" do
+    User.register(Sapo, :sarasa)
 
-  #   wait()
+    wait()
 
-  #   Group.new(UnGrupo,Papo)
+    Group.new(UnGrupo,Papo)
 
-  #   assert User.join(Sapo,UnGrupo) == :ok
+    eventually assert User.join(Sapo,UnGrupo) == :ok
+    eventually assert Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
+  end
 
-  #   wait()
-  #   assert Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
-  # end
+  test "leave group" do
+    User.register(Sapo, :sarasa)
 
-  # test "leave group" do
-  #   User.register(Sapo, :sarasa)
+    wait()
 
-  #   wait()
+    Group.new(UnGrupo,Papo)
 
-  #   Group.new(UnGrupo,Papo)
+    User.join(Sapo,UnGrupo)
 
-  #   User.join(Sapo,UnGrupo)
+    eventually assert Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
 
-  #   wait()
-  #   assert Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
+    User.leave(Sapo,UnGrupo)
 
-  #   User.leave(Sapo,UnGrupo)
-
-  #   wait()
-  #   assert !Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
-  # end
+    eventually assert !Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
+  end
 end

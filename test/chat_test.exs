@@ -1,49 +1,45 @@
-# defmodule Chat.Test do
-#   use ExUnit.Case
-#   import Test.Helper
-#   doctest Chat
+defmodule Chat.Test do
+  use Test.Case, subject: Chat
 
-#   setup_all do
-#     User.register(Papo, :pass)
-#   end
+  test "send message" do
+    User.register(Papo, :sarasa)
+    User.register(Pepe, :sarasa)
 
-#   test "send message" do
-#     User.register(Pepe, :sarasa)
-#     Group.new(UnGrupo,Papo)
+    wait()
+    Group.new(UnGrupo,Papo)
 
-#     wait()
+    wait()
 
-#     User.join(Pepe,UnGrupo)
-#     wait()
+    User.join(Pepe,UnGrupo)
 
-#     assert [] = Chat.msgs(UnGrupo)
+    eventually assert [] = Chat.msgs(UnGrupo)
 
-#     Chat.msg(UnGrupo,Pepe,"un mensaje")
+    Chat.msg(UnGrupo,Pepe,"un mensaje")
 
-#     wait()
+    eventually assert [%{id: _,sender: Pepe, text: "un mensaje",created: _,updated: _}] = Chat.msgs(UnGrupo)
+  end
 
-#     assert [%{id: _,sender: Pepe, text: "un mensaje",created: _,updated: _}] = Chat.msgs(UnGrupo)
-#   end
+  test "modify message" do
+    User.register(Papo, :sarasa)
+    User.register(Pepe, :sarasa)
 
-#   test "modify message" do
-#     User.register(Pepe, :sarasa)
-#     Group.new(UnGrupo,Papo)
+    wait()
 
-#     wait()
+    Group.new(UnGrupo,Papo)
 
-#     User.join(Pepe,UnGrupo)
-#     wait()
+    wait()
 
-#     assert [] = Chat.msgs(UnGrupo)
+    User.join(Pepe,UnGrupo)
 
-#     assert [%{id: id_mensaje,sender: Pepe, text: "un mensaje",created: _,updated: _}] = Chat.msg(UnGrupo,Pepe,"un mensaje")
+    eventually assert [] = Chat.msgs(UnGrupo)
 
-#     wait()
+    eventually assert [%{id: id_mensaje,sender: Pepe, text: "un mensaje",created: _,updated: _}] = Chat.msg(UnGrupo,Pepe,"un mensaje")
 
-#     Chat.mod((UnGrupo,Pepe,id_mensaje,"mensaje modificado")
-#     wait()
+    wait()
 
-#     assert [%{id: _,sender: Pepe, text: "mensaje modificado",created: _,updated: _}] = Chat.msgs(UnGrupo)
-#   end
+    Chat.mod(UnGrupo,Pepe,id_mensaje,"mensaje modificado")
 
-# end
+    eventually assert [%{id: _,sender: Pepe, text: "mensaje modificado",created: _,updated: _}] = Chat.msgs(UnGrupo)
+  end
+
+end
