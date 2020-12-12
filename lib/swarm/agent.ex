@@ -7,16 +7,18 @@ defmodule Swarm.Agent do
         GenServer.start_link(__MODULE__, id, ops)
       end
 
-      def init(id), do: {:ok, {0, id}, {:continue, :init}}
-      def handle_continue(:init, {_, id}) do
-        prev = fetch(id, :init)
+      def init(id) do
+        {:ok, {0, id}, {:continue, :init}}
+      end
+      def handle_continue(:init, {0, id}) do
+        replica = fetch(id, :state)
         # TODO: deadlock vs msg loss
         Swarm.join(group(id), self())
-        {:noreply, if prev
-          do {:os.system_time, prev}
-          else {0, on_init(id)} end}
+        {:noreply, {:os.system_time,
+          if replica do replica
+          else on_init(id) end}}
       end
-      def handle_fetch(state, :init), do: state
+      def handle_fetch(state, :state), do: state
       def on_init(id), do: %{id: id}
       defoverridable on_init: 1
 

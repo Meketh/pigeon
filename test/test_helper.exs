@@ -1,6 +1,15 @@
-# defmodule Test.Helper do
-#   def wait, do: Process.sleep(1000)
-# end
+defmodule Test.Case do
+  defmacro __using__([subject: subject]) do
+    quote do
+      import Macros
+      import Test.Case
+      use ExUnit.Case
+      use AssertEventually, timeout: 5_000, interval: 1_000
+      doctest unquote(subject)
+      import unquote(subject)
+    end
+  end
+end
 Application.ensure_all_started(:pigeon)
 ExUnit.start()
 # :ok = LocalCluster.start()

@@ -42,12 +42,12 @@ defmodule User do
     else state end
   end
   def handle_event(state, :join, group) do
-    IO.inspect{state, :join, group}
-    last_seen = get_in(state, [:groups, group.id, :last_seen])
-    put_in(state.groups[group.id],
-      if last_seen
-      do put_in(group.last_seen, last_seen)
-      else group end)
+    self_group = state.groups[group.id]
+    self_group = put_in(group.last_seen,
+      if self_group
+      do self_group.last_seen
+      else group.last_seen end)
+    put_in(state.groups[group.id], self_group)
   end
   def handle_event(state, :leave, id) do
     state
