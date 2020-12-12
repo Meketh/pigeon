@@ -12,7 +12,8 @@ defmodule Swarm.Agent do
         prev = fetch(id, :init)
         # TODO: deadlock vs msg loss
         Swarm.join(group(id), self())
-        {:noreply, if prev do prev
+        {:noreply, if prev
+          do {:os.system_time, prev}
           else {0, on_init(id)} end}
       end
       def handle_fetch(state, :init), do: state

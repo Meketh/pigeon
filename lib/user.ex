@@ -22,7 +22,7 @@ defmodule User do
   end
 
   # fetch
-  defp pass(id), do: fetch(id, :pass)
+  def pass(id), do: fetch(id, :pass)
   def groups(id), do: fetch(id, :groups)
 
   # handle_fetch
@@ -42,6 +42,7 @@ defmodule User do
     else state end
   end
   def handle_event(state, :join, group) do
+    IO.inspect{state, :join, group}
     last_seen = get_in(state, [:groups, group.id, :last_seen])
     put_in(state.groups[group.id],
       if last_seen

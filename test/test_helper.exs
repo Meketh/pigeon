@@ -1,6 +1,6 @@
-defmodule Test.Helper do
-  def wait, do: Process.sleep(1000)
-end
+# defmodule Test.Helper do
+#   def wait, do: Process.sleep(1000)
+# end
 Application.ensure_all_started(:pigeon)
 ExUnit.start()
 # :ok = LocalCluster.start()

@@ -1,35 +1,39 @@
 defmodule User.Test do
   use ExUnit.Case
-  import Test.Helper
   doctest User
+  import User
 
   setup_all do
-    User.register(Papo, :pass)
+    register(Papo, :pass)
   end
 
   test "register" do
-    assert User.register(Pepe, :sarasa) == :ok
-    wait()
-    assert User.register(Pepe, :pituto) == {:error, :already_registered}
+    assert register(Pepe, :sarasa) == :ok
+    assert register(Pepe, :pituto) == {:error, :already_registered}
   end
 
   test "login" do
-    assert User.login(Papo, :pass) == :ok
-    wait()
-    assert User.login(Papo, :no) == {:error, :user_pass_missmatch}
+    assert login(Papo, :pass) == :ok
+    assert login(Papo, :no) == {:error, :user_pass_missmatch}
   end
 
   test "change pass" do
-    assert User.register(Sapo, :sarasa) == :ok
-    wait()
-    assert User.login(Sapo, :sarasa) == :ok
+    assert register(Sapo, :sarasa) == :ok
+    assert login(Sapo, :sarasa) == :ok
 
-    assert User.pass(Sapo, :sarasa, :pass) == :ok
-    wait()
-    assert User.login(Sapo, :pass) == :ok
+    assert pass(Sapo, :sarasa, :pass) == :ok
+    assert pass(Sapo, :sarasa, :error) == :ok
+    Proccess.sleep(3000)
+    assert login(Sapo, :pass) == :ok
+    assert login(Sapo, :error) == {:error, :user_pass_missmatch}
+  end
 
-    assert User.pass(Sapo, :sarasa, :error) == :ok
-    wait()
-    assert User.login(Sapo, :error) == {:error, :user_pass_missmatch}
+  test "updates last seen" do
+    assert groups(Papo) == %{}
+    assert Group.pm(Papo, Pepe) == :ok
+    gs = groups(Papo)
+    id = Group.pm_id(Papo, Pepe)
+    assert map_size(gs) == 1
+    assert %{^id => %{id: ^id, name: nil}}= gs
   end
 end

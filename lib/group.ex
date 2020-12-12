@@ -10,7 +10,7 @@ defmodule Group do
   end
 
   def pm_id(a, b), do: Enum.sort([a, b])
-  def new_pm(a, b) do
+  def pm(a, b) do
     group = %Group{
       id: pm_id(a, b),
       role: :member,

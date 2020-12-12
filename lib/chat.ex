@@ -21,7 +21,8 @@ defmodule Chat do
         Map.merge(self.members, other.members, fn({ta, va}, {tb, vb})->
           if ta > tb do {ta, va} else {tb, vb} end
         end))
-      |> put_in([:msgs], Map.merge(self.msgs, other.msgs, fn(a, b)->
+      |> put_in([:msgs],
+        Map.merge(self.msgs, other.msgs, fn(a, b)->
           if a.updated > b.updated do a else b end
         end))}
   end
