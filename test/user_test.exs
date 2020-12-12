@@ -29,4 +29,35 @@ defmodule User.Test do
     eventually assert map_size(groups(Seen)) == 1
     assert %{^id => %{id: ^id, name: nil}} = groups(Seen)
   end
+
+  # test "join to group" do
+  #   User.register(Sapo, :sarasa)
+
+  #   wait()
+
+  #   Group.new(UnGrupo,Papo)
+
+  #   assert User.join(Sapo,UnGrupo) == :ok
+
+  #   wait()
+  #   assert Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
+  # end
+
+  # test "leave group" do
+  #   User.register(Sapo, :sarasa)
+
+  #   wait()
+
+  #   Group.new(UnGrupo,Papo)
+
+  #   User.join(Sapo,UnGrupo)
+
+  #   wait()
+  #   assert Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
+
+  #   User.leave(Sapo,UnGrupo)
+
+  #   wait()
+  #   assert !Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
+  # end
 end
