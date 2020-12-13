@@ -25,6 +25,8 @@ defmodule User do
   def pass(id), do: fetch(id, :pass)
   def groups(id), do: fetch(id, :groups)
 
+  def get_group(id,name), do: Enum.find(groups(id),fn {_,g}->g.name==name end)
+
   # handle_fetch
   def handle_fetch(state, :pass), do: state.pass
   def handle_fetch(state, :groups), do: state.groups

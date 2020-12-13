@@ -31,29 +31,36 @@ defmodule User.Test do
   end
 
   test "join to group" do
+    User.register(Papo, :sarasa)
     User.register(Sapo, :sarasa)
 
     wait()
 
-    Group.new(UnGrupo,Papo)
+    Group.new(UnGrupo, Papo)
 
-    eventually assert User.join(Sapo,UnGrupo) == :ok
-    eventually assert Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
+    eventually assert {id_group, _} = User.get_group(Papo, UnGrupo)
+
+    User.join(Sapo, UnGrupo)
+
+    eventually assert Enum.any?(Chat.members(id_group), fn m -> m == Sapo end)
   end
 
   test "leave group" do
+    User.register(Papo, :sarasa)
     User.register(Sapo, :sarasa)
 
     wait()
 
-    Group.new(UnGrupo,Papo)
+    Group.new(UnGrupo, Papo)
 
-    User.join(Sapo,UnGrupo)
+    eventually assert {id_group, _} = User.get_group(Papo, UnGrupo)
 
-    eventually assert Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
+    User.join(Sapo, UnGrupo)
 
-    User.leave(Sapo,UnGrupo)
+    eventually assert Enum.any?(Chat.members(id_group), fn m -> m == Sapo end)
 
-    eventually assert !Enum.any?(Chat.members(UnGrupo),fn m-> m==Sapo end)
+    User.leave(Sapo, id_group)
+
+    eventually assert !Enum.any?(Chat.members(id_group), fn m -> m == Sapo end)
   end
 end
