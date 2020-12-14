@@ -1,6 +1,10 @@
 defmodule User.Test do
   use Test.Case, subject: User
 
+  setup do
+    clean_swarm_context()
+  end
+
   test "register" do
     assert register(Reg, :sarasa) == :ok
     eventually assert register(Reg, :pituto) == {:error, :already_registered}
@@ -15,8 +19,8 @@ defmodule User.Test do
   test "change pass" do
     assert register(Pass, :sarasa) == :ok
     eventually assert login(Pass, :sarasa) == :ok
-    assert pass(Pass, :sarasa, :pass) == :ok
-    assert pass(Pass, :jojojo, :error) == :ok
+    eventually assert pass(Pass, :sarasa, :pass) == :ok
+    eventually assert pass(Pass, :jojojo, :error) == :ok
     eventually assert login(Pass, :error) == {:error, :user_pass_missmatch}
     eventually assert login(Pass, :pass) == :ok
   end
@@ -34,9 +38,7 @@ defmodule User.Test do
     User.register(Papo, :sarasa)
     User.register(Sapo, :sarasa)
 
-    wait()
-
-    Group.new(UnGrupo, Papo)
+    eventually assert Group.new(UnGrupo, Papo) == :ok
 
     eventually assert {id_group, _} = User.get_group(Papo, UnGrupo)
 
@@ -49,9 +51,8 @@ defmodule User.Test do
     User.register(Papo, :sarasa)
     User.register(Sapo, :sarasa)
 
-    wait()
+    eventually assert Group.new(UnGrupo, Papo) == :ok
 
-    Group.new(UnGrupo, Papo)
 
     eventually assert {id_group, _} = User.get_group(Papo, UnGrupo)
 

@@ -1,5 +1,5 @@
 defmodule Test.Case do
-  defmacro __using__([subject: subject]) do
+  defmacro __using__(subject: subject) do
     quote do
       import Macros
       import Test.Case
@@ -9,8 +9,17 @@ defmodule Test.Case do
       import unquote(subject)
     end
   end
-  def wait(), do: Process.sleep(5000)
+
+  def wait(time\\5000), do: Process.sleep(time)
+
+  def clean_swarm_context() do
+    Enum.each(Swarm.Supervisor.childs(), fn {c,_} ->
+      Enum.each(Swarm.members(c.id), fn m -> Swarm.leave(c.id, m) end)
+      wait(3000)
+    end)
+  end
 end
+
 Application.ensure_all_started(:pigeon)
 ExUnit.start()
 # :ok = LocalCluster.start()

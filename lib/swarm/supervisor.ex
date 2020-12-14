@@ -7,6 +7,8 @@ defmodule Swarm.Supervisor do
   def start_child(child_spec), do: DS.start_child(__MODULE__, child_spec)
 
   def via(id), do: {:via, :swarm, id}
+
+  def childs(), do: Swarm.registered()
   def whereis(id), do: Swarm.whereis_name(id)
   def exists(id), do: whereis(id) != :undefined
   def replicated(id), do: 1..@replicas
