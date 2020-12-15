@@ -6,14 +6,11 @@ services:
     networks: [net]
     build: .
     image: elixir:local
-    environment:
-      - MIX_CMD=run
     command: sh ./entrypoint.sh
     volumes:
-      - ./entrypoint.sh:/app/entrypoint.sh
       - ./config:/app/config
       - ./deps:/app/deps
       - ./lib:/app/lib
-      - ./test:/app/test
+      - ./entrypoint.sh:/app/entrypoint.sh
       - ./mix.exs:/app/mix.exs
       - ./mix.lock:/app/mix.lock

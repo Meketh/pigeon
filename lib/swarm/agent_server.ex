@@ -1,8 +1,13 @@
 defmodule Swarm.Agent.Server do
   use GenServer
   def init({id, stores}) do
-    {:ok, sup} = Supervisor.start_link(
-      Enum.map(stores, &Swarm.Agent.store_spec(id, &1)),
+    {:ok, sup} = Supervisor.start_link([
+      %{id: :sync_stores, type: :worker, restart: :permanent,
+      start: {Task, :start_link, [__MODULE__, :sync_stores, [id]]}}
+      | for store <- stores do
+        %{id: store, type: :worker, restart: :permanent,
+        start: {DeltaCrdt, :start_link, [DeltaCrdt.AWLWWMap]}}
+      end],
       strategy: :one_for_one)
     {:ok, {id, sup}, {:continue, :init}}
   end
@@ -10,9 +15,14 @@ defmodule Swarm.Agent.Server do
     Swarm.join(id, self())
     {:noreply, {id, sup}}
   end
+  def sync_stores(id) do
+    set_neighbours(id)
+    Process.sleep(500)
+    sync_stores(id)
+  end
 
-  def handle_call({:store, store}, _from, state) do
-    {:reply, get_store(state, store), state}
+  def handle_call(:get_stores, _from, state) do
+    {:reply, get_stores(state), state}
   end
   def handle_call({:set, path, value}, _from, state) do
     update(state, path, fn _ ->{value}end)
@@ -40,7 +50,8 @@ defmodule Swarm.Agent.Server do
   end
   def handle_call({:swarm, :begin_handoff}, _from, state) do
     # Handoff: :restart | :ignore | {:resume, handoff}
-    {:reply, :restart, state}
+    Util.debug{:begin_handoff, state}
+    {:reply, {:resume, state}, state}
   end
 
   def handle_cast({:cast, fun}, state) do
@@ -53,12 +64,13 @@ defmodule Swarm.Agent.Server do
     update(state, path, fun)
     {:noreply, state}
   end
-  def handle_cast({:swarm, :end_handoff, _handoff}, state) do
+  def handle_cast({:swarm, :end_handoff, handoff}, state) do
+    Util.debug{:end_handoff, handoff, state}
     {:noreply, state}
   end
   def handle_cast({:swarm, :resolve_conflict, other}, state) do
     # DeltaCrdt.set_neighbours(n, neighbours)
-    IO.inspect{other, state}
+    Util.debug{:resolve_conflict, other, state}
     {:noreply, state}
   end
 
@@ -69,17 +81,46 @@ defmodule Swarm.Agent.Server do
     handle_cast({:cast, path, fun}, state)
   end
   def handle_info({:swarm, :die}, state) do
-    Process.sleep(1_000)
+    Util.debug{:die, state}
+    leave(state)
+    Process.sleep(3_000)
+    Util.debug{:shutdown, state}
     {:stop, :shutdown, state}
   end
+  def terminate(_, state) do
+    leave(state)
+    Util.debug{:terminate, state, self()}
+    :normal
+  end
 
-  # private
+  defp leave({id, sup}) do
+    Util.debug{:leave, id, self()}
+    Swarm.leave(id, self())
+    Supervisor.stop(sup)
+  end
+
+  defp set_neighbours(id) do
+    try do
+      for {_, pids} <- id
+      |> Swarm.multi_call(:get_stores)
+      |> List.flatten()
+      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+      do
+        Enum.map(pids, &DeltaCrdt.set_neighbours(&1, pids))
+      end
+    catch
+      :exit, reason -> Util.debug{:exit, reason}
+      error -> Util.debug{:catch, error}
+    end
+  end
+
   defp get_store(state, store) do
     get_stores(state) |> get_in([store])
   end
   defp get_stores({_, sup}) do
     for {id, pid, _, _} <- Supervisor.which_children(sup),
-      is_pid(pid), into: %{}, do: {id, pid}
+    is_pid(pid) and not id in [:undefined, :sync_stores],
+    into: %{}, do: {id, pid}
   end
 
   defp read_stores(stores) do

@@ -1,17 +1,16 @@
 import Config
 config :nanoid, size: 7
-config :logger, level: :error
 config :pigeon, replicas: 3, timeout: 13_000
-# config :logger, compile_time_purge_matching: [
-#   # [module: Bar, function: "foo/3", level_lower_than: :error],
-#   [application: :peerage],
-#   [application: :swarm],
-# ]
+config :logger, compile_time_purge_matching: [
+  # [module: Bar, function: "foo/3", level_lower_than: :error],
+  [application: :peerage],
+  [application: :swarm],
+]
 
 config :swarm, distribution_strategy: Swarm.Distribution, debug: false,
   node_whitelist: (cond do
-    Mix.env() == :test -> [~r/^.*$/]
-    true -> [~r/^pigeon.*$/]
+    Mix.env() == :test -> [~r{^.*$}]
+    true -> [~r{^pigeon@.*$}]
   end)
 
 config :peerage, debug: false, interval: 1

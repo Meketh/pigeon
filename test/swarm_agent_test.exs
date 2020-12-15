@@ -5,13 +5,15 @@ defmodule Swarm.Agent.Test do
     id = :replicate
     assert replicate(id, []) == {:ok, id}
     assert exists(id)
+    dereplicate(id)
   end
 
   test "1 store" do
     id = :store1
     assert replicate(id, [:store]) == {:ok, id}
-    eventually assert get(id, []) == %{store: %{}}
+    assert_eventually get(id, []) == %{store: %{}}
     assert get(id, [:store]) == %{}
+    dereplicate(id)
   end
 
   test "3 store" do
@@ -21,6 +23,7 @@ defmodule Swarm.Agent.Test do
     assert get(id, [:a]) == %{}
     assert get(id, [:b]) == %{}
     assert get(id, [:c]) == %{}
+    dereplicate(id)
   end
 
   test "set" do
@@ -33,6 +36,7 @@ defmodule Swarm.Agent.Test do
     assert set(id, [:x, :a], 999) == :ok
     assert get(id, [:x, :a]) == 999
     assert get(id, [:x]) == %{a: 999, b: 666}
+    dereplicate(id)
   end
 
   test "update" do
@@ -44,6 +48,7 @@ defmodule Swarm.Agent.Test do
     assert get(id, [:x, :a]) == 666
     assert update(id, [:x, :a], {Kernel, :+, [111]}) == :ok
     assert get(id, [:x, :a]) == 777
+    dereplicate(id)
   end
 
   test "update_in" do
@@ -54,6 +59,7 @@ defmodule Swarm.Agent.Test do
     assert get(id, [:x, :a, :b, :c]) == 444
     assert set(id, [:x, :a, :b, :c], 555) == :ok
     assert get(id, [:x, :a, :b, :c]) == 555
+    dereplicate(id)
   end
 
   test "get_and_update" do
@@ -61,8 +67,8 @@ defmodule Swarm.Agent.Test do
     assert replicate(id, [:x]) == {:ok, id}
     assert set(id, [:x], %{a: %{b: %{c: 333}}}) == :ok
     assert get_and_update(id, [:x, :a], fn a ->
-      {Sarasa, %{z: a.b, x: a.b.c * 2}}
-    end) == Sarasa
+      {:sarasa, %{z: a.b, x: a.b.c * 2}}
+    end) == :sarasa
     new_a = %{z: %{c: 333}, x: 666}
     assert get(id, [:x, :a]) == new_a
     assert get_and_update(id, [:x], fn x -> {:ok, %{b: x.a}} end) == :ok
@@ -71,6 +77,7 @@ defmodule Swarm.Agent.Test do
       {x.b.z.c - x.b.x, %{a: nil, b: nil, c: x.b.z.c + x.b.x}}
     end) == -333
     assert get(id, [:x]) == %{c: 999}
+    dereplicate(id)
   end
 
 
@@ -80,9 +87,10 @@ defmodule Swarm.Agent.Test do
     assert set(id, [:x, :a], 333) == :ok
     assert get(id, [:x, :a]) == 333
     assert cast(id, [:x, :a], &(&1 + 333)) == :ok
-    eventually assert get(id, [:x, :a]) == 666
+    assert_eventually get(id, [:x, :a]) == 666
     assert cast(id, [:x, :a], {Kernel, :+, [111]}) == :ok
-    eventually assert get(id, [:x, :a]) == 777
+    assert_eventually get(id, [:x, :a]) == 777
+    dereplicate(id)
   end
 
   test "cast_in" do
@@ -90,6 +98,7 @@ defmodule Swarm.Agent.Test do
     assert replicate(id, [:x]) == {:ok, id}
     assert set(id, [:x], %{a: %{b: %{c: 333}}}) == :ok
     assert cast(id, [:x, :a, :b, :c], {Kernel, :+, [111]}) == :ok
-    eventually assert get(id, [:x, :a, :b, :c]) == 444
+    assert_eventually get(id, [:x, :a, :b, :c]) == 444
+    dereplicate(id)
   end
 end

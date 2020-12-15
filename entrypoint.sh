@@ -4,12 +4,12 @@ watch_cmd() {
     ag -g "(?:.ex$)|(?:.exs$)" | entr -drs "elixir $1"
   done
 }
-if [ "$2" = "" ]; then
+if [ "$2" = "" ]; then # Docker
   watch_cmd "$COOKIE --name pigeon@$(hostname -i) -S mix run --no-halt"
-else
+else # Localhost
   export NODE_IPS="$1"
   if [ "$2" = "test" ]; then
-    watch_cmd "-S mix test --no-start"
+    watch_cmd "-S mix test --no-start $3"
   elif [ "$2" = "cli" ]; then
     sh -c "iex $COOKIE --sname cli-$(date +%s%N) --remsh pigeon@0.0.0.0"
   else

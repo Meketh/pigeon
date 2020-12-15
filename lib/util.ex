@@ -16,4 +16,8 @@ defmodule Util do
   def run({m, f, a}, []), do: apply(m, f, a)
   def run({m, f, a}, extra), do: run({m, f, extra ++ a})
   def run(fun, args), do: apply(fun, args)
+  def debug(term) do
+    :logger.debug("#{inspect term}")
+    term
+  end
 end

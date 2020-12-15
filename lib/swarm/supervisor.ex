@@ -28,6 +28,11 @@ defmodule Swarm.Supervisor do
       else: {:error, replicas}
     end
   end
+  def dereplicate(id) do
+    for r <- 1..@replicas do
+      unregister(%{id: id, replica: r})
+    end
+  end
 
   def register(child_spec) do
     Swarm.register_name(child_spec.id,
@@ -38,6 +43,18 @@ defmodule Swarm.Supervisor do
   end
 
   def via(id), do: {:via, :swarm, id}
+  # def call_all(id, msg) do
+  #   for r <- 1..@replicas do
+  #     try do
+  #       via = via(%{id: id, replica: r})
+  #       if Process.alive?(via) do
+  #         GenServer.call(via, msg)
+  #       end
+  #     catch
+  #       :exit, _ -> nil
+  #     end
+  #   end
+  # end
   def call_any(id, msg) do
     do_any(&GenServer.call/2, %{id: id, replica: 1}, msg)
   end

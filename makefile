@@ -5,9 +5,12 @@ cli:
 	sh entrypoint.sh "" cli
 run:
 	sh entrypoint.sh "$$($(call ips))" run
-tests:
+tests_all:
 	sh entrypoint.sh "$$($(call ips))" test
+tests:
+	sh entrypoint.sh "$$($(call ips))" test "--exclude cluster:true"
 install:
-	mix do deps.get
+	rm -rf _build deps
+	mix do deps.get, deps.compile
 up: install
 	docker-compose up -d --scale node=3
