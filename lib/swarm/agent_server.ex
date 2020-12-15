@@ -1,4 +1,5 @@
 defmodule Swarm.Agent.Server do
+  @sync_interval Application.get_env(:pigeon, :sync_interval, 500)
   use GenServer
   def init({id, stores}) do
     {:ok, sup} = Supervisor.start_link([
@@ -16,8 +17,20 @@ defmodule Swarm.Agent.Server do
     {:noreply, {id, sup}}
   end
   def sync_stores(id) do
-    set_neighbours(id)
-    Process.sleep(500)
+    try do
+      for {_, pids} <- id
+      |> Swarm.multi_call(:get_stores)
+      |> Enum.map(&Map.to_list/1)
+      |> List.flatten()
+      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+      do
+        Enum.map(pids, &DeltaCrdt.set_neighbours(&1, pids))
+      end
+    catch
+      :exit, reason -> Util.debug{:exit, reason}
+      error -> Util.debug{:catch, error}
+    end
+    Process.sleep(@sync_interval)
     sync_stores(id)
   end
 
@@ -97,21 +110,6 @@ defmodule Swarm.Agent.Server do
     Util.debug{:leave, id, self()}
     Swarm.leave(id, self())
     Supervisor.stop(sup)
-  end
-
-  defp set_neighbours(id) do
-    try do
-      for {_, pids} <- id
-      |> Swarm.multi_call(:get_stores)
-      |> List.flatten()
-      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
-      do
-        Enum.map(pids, &DeltaCrdt.set_neighbours(&1, pids))
-      end
-    catch
-      :exit, reason -> Util.debug{:exit, reason}
-      error -> Util.debug{:catch, error}
-    end
   end
 
   defp get_store(state, store) do
