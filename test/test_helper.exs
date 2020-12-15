@@ -1,35 +1,26 @@
 defmodule Test.Case do
   defmacro __using__([subject: subject]) do
     quote do
-      import Macros
+      import Util
       import Test.Case
       use ExUnit.Case
-      use AssertEventually, timeout: 5_000, interval: 1_000
+      use AssertEventually, timeout: 500, interval: 100
       doctest unquote(subject)
       import unquote(subject)
+      def run_on(node, fun, args), do: run_on(node, unquote(subject), fun, args)
     end
   end
+  def run_on(node, mod, fun, args), do: Node.spawn(node, mod, fun, args)
+  def start_nodes(n) do
+    nodes = LocalCluster.start_nodes("pigeon", n)
+    Process.sleep(3_000)
+    nodes
+  end
+  def stop_nodes(nodes) do
+    LocalCluster.stop_nodes(nodes)
+  end
 end
+
+LocalCluster.start()
 Application.ensure_all_started(:pigeon)
 ExUnit.start()
-# :ok = LocalCluster.start()
-# defmodule MyTest do
-#   use ExUnit.Case
-#   test "spawning tasks on a cluster" do
-#     nodes = LocalCluster.start_nodes("pigeon", 3, [
-#       files: [__ENV__.file]
-#     ])
-#     [node1, node2, node3] = nodes
-#     assert Node.ping(node1) == :pong
-#     assert Node.ping(node2) == :pong
-#     assert Node.ping(node3) == :pong
-#     caller = self()
-#     Node.spawn(node1, User, :login, [Pepe, :sarasa])
-#     Node.spawn(node1, fn->send(caller, :from_node_1)end)
-#     Node.spawn(node2, fn->send(caller, :from_node_2)end)
-#     Node.spawn(node3, fn->send(caller, :from_node_3)end)
-#     assert_receive :from_node_1
-#     assert_receive :from_node_2
-#     assert_receive :from_node_3
-#   end
-# end

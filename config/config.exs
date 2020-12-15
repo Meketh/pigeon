@@ -1,23 +1,25 @@
 import Config
 config :nanoid, size: 7
-config :pigeon, replicas: 3
-config :logger, backends: [{FlexLogger, :flexlog}], flexlog: [
-  logger: :console,
-  default_level: :debug,
-  level_config: [
-    [module: Foo, level: :info],
-    [application: :peerage, level: :off],
-    [application: :swarm, level: :off],
-  ]]
+config :logger, level: :error
+config :pigeon, replicas: 3, timeout: 13_000
+# config :logger, compile_time_purge_matching: [
+#   # [module: Bar, function: "foo/3", level_lower_than: :error],
+#   [application: :peerage],
+#   [application: :swarm],
+# ]
 
-# Cluster
-config :swarm, distribution_strategy: Swarm.Distribution,
-  debug: false, node_whitelist: [~r/^pigeon@.*$/]
-config :peerage, interval: 1
+config :swarm, distribution_strategy: Swarm.Distribution, debug: false,
+  node_whitelist: (cond do
+    Mix.env() == :test -> [~r/^.*$/]
+    true -> [~r/^pigeon.*$/]
+  end)
+
+config :peerage, debug: false, interval: 1
 ips = System.get_env("NODE_IPS")
-if ips == nil do
-  config :peerage, via: Peerage.Via.Udp, serves: true
-else
-  config :peerage, via: Peerage.Via.List, node_list: String.split(ips)
-    |> Enum.map(&String.to_atom("pigeon@"<>&1))
+cond do
+  Mix.env() == :test -> config :peerage, via: Peerage.Via.Self
+  ips == nil -> config :peerage, via: Peerage.Via.Udp, serves: true
+  true ->
+    config :peerage, via: Peerage.Via.List, node_list: String.split(ips)
+      |> Enum.map(&String.to_atom("pigeon@"<>&1))
 end

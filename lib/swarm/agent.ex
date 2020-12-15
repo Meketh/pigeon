@@ -1,80 +1,46 @@
 defmodule Swarm.Agent do
   alias Swarm.Supervisor, as: SS
-  defmacro __using__(_opts) do
-    quote do
-      use GenServer
-      def start_link(id, ops \\ []) do
-        GenServer.start_link(__MODULE__, id, ops)
-      end
+  def exists(id), do: SS.replicated(id)
+  def replicate(id, stores), do: SS.replicate(child_spec(id, stores))
 
-      def init(id) do
-        {:ok, {0, id}, {:continue, :init}}
-      end
-      def handle_continue(:init, {0, id}) do
-        replica = fetch(id, :state)
-        # TODO: deadlock vs msg loss
-        Swarm.join(group(id), self())
-        {:noreply, {:os.system_time,
-          if replica do replica
-          else on_init(id) end}}
-      end
-      def handle_fetch(state, :state), do: state
-      def on_init(id), do: %{id: id}
-      defoverridable on_init: 1
-
-      def group(id), do: {__MODULE__, id}
-      def exists(id), do: SS.replicated(group(id))
-      def new(id), do: SS.replicate(child_spec(id))
-      def child_spec(id) do
-        %{id: group(id),
-        shutdown: 10_000,
-        restart: :transient,
-        start: {__MODULE__, :start_link, [id]}}
-      end
-
-      def emit(id, event, data) do
-        Swarm.publish(group(id), {:event, event, data})
-      end
-      def handle_info({:event, event, data}, {_, state}) do
-        {:noreply, {:os.system_time, handle_event(state, event, data)}}
-      end
-
-      def fetch(id, request) do
-        for {time, response} <- Swarm.multi_call(
-          group(id), {:fetch, request}),
-        reduce: {0, nil} do
-          {max_time, _} when max_time < time -> {time, response}
-          max -> max
-        end |> elem(1)
-      end
-      def handle_call({:fetch, request}, _from, {time, state}) do
-        {:reply, {time, handle_fetch(state, request)}, {time, state}}
-      end
-
-      def task(id, fun, args, seconds) do
-        Swarm.Task.register(id,
-          __MODULE__, fun, args,
-          :os.system_time + seconds * 1_000_000_000)
-      end
-
-      # Swarm.Callbacks
-      def handle_call({:swarm, :begin_handoff}, _from, state) do
-        # Handoff: :restart | :ignore | {:resume, handoff}
-        {:reply, :restart, state}
-      end
-      def handle_cast({:swarm, :end_handoff, _handoff}, state) do
-        {:noreply, state}
-      end
-
-      def handle_cast({:swarm, :resolve_conflict, other}, state) do
-        {:noreply, handle_conflict(other, state)}
-      end
-      def handle_conflict(_, state), do: state
-      defoverridable handle_conflict: 2
-
-      def handle_info({:swarm, :die}, state) do
-        {:stop, :shutdown, state}
-      end
-    end
+  def child_spec(id, stores) do
+    %{id: id, type: :supervisor, restart: :transient,
+    start: {__MODULE__, :start_link, [id, stores]}}
   end
+  def start_link(id, stores) do
+    GenServer.start_link(Swarm.Agent.Server, {id, stores})
+  end
+
+  def store_spec(id, store) do
+    %{id: store, type: :worker, restart: :permanent,
+    start: {__MODULE__, :start_store, [id, store]}}
+  end
+  def start_store(id, store) do
+    {:ok, pid} = DeltaCrdt.start_link(DeltaCrdt.AWLWWMap)
+    neighbours = [pid | get_stores(id, store)] |> Enum.filter(&(&1))
+    for n <- neighbours,
+    do: DeltaCrdt.set_neighbours(n, neighbours)
+    {:ok, pid}
+  end
+
+  def get_stores(id, store), do: Swarm.multi_call(id, {:store, store})
+  def set_all(id, path, value), do: Swarm.multi_call(id, {:get, path, value})
+  def get_all(id, path), do: Swarm.multi_call(id, {:get, path})
+  def get_all(id, path, fun), do: Swarm.multi_call(id, {:get, path, fun})
+  def get_and_update_all(id, fun), do: Swarm.multi_call(id, {:get_and_update, fun})
+  def get_and_update_all(id, path, fun), do: Swarm.multi_call(id, {:get_and_update, path, fun})
+  def update_all(id, fun), do: Swarm.multi_call(id, {:update, fun})
+  def update_all(id, path, fun), do: Swarm.multi_call(id, {:update, path, fun})
+  def cast_all(id, fun), do: Swarm.publish(id, {:cast, fun})
+  def cast_all(id, path, fun), do: Swarm.publish(id, {:cast, path, fun})
+
+  def set(id, path, value), do: SS.call_any(id, {:set, path, value})
+  def get(id, path), do: SS.call_any(id, {:get, path})
+  def get(id, path, fun), do: SS.call_any(id, {:get, path, fun})
+  def get_and_update(id, fun), do: SS.call_any(id, {:get_and_update, fun})
+  def get_and_update(id, path, fun), do: SS.call_any(id, {:get_and_update, path, fun})
+  def update(id, fun), do: SS.call_any(id, {:update, fun})
+  def update(id, path, fun), do: SS.call_any(id, {:update, path, fun})
+  def cast(id, fun), do: SS.cast_any(id, {:cast, fun})
+  def cast(id, path, fun), do: SS.cast_any(id, {:cast, path, fun})
 end
