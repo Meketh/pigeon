@@ -35,8 +35,9 @@ defmodule Swarm.Agent do
   defmacro __using__(_opts) do
     quote do
       alias Swarm.Agent, as: SA
+      def mfa(fun, args), do: {__MODULE__, fun, args}
       def group(id), do: {__MODULE__, id}
-      def exists(id), do: SA.replicated(group(id))
+      def exists(id), do: SA.exists(group(id))
       def replicate(id, stores), do: SA.replicate(group(id), stores)
       def dereplicate(id), do: SA.dereplicate(group(id))
 

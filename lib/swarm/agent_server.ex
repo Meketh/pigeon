@@ -27,8 +27,10 @@ defmodule Swarm.Agent.Server do
         Enum.map(pids, &DeltaCrdt.set_neighbours(&1, pids))
       end
     catch
-      :exit, reason -> Util.debug{:exit, reason}
-      error -> Util.debug{:catch, error}
+      :exit, reason -> reason
+      error -> error
+      # :exit, reason -> Util.debug{:exit, reason}
+      # error -> Util.debug{:catch, error}
     end
     Process.sleep(@sync_interval)
     sync_stores(id)
@@ -63,8 +65,7 @@ defmodule Swarm.Agent.Server do
   end
   def handle_call({:swarm, :begin_handoff}, _from, state) do
     # Handoff: :restart | :ignore | {:resume, handoff}
-    Util.debug{:begin_handoff, state}
-    {:reply, {:resume, state}, state}
+    {:reply, {:resume, get(state, [])}, state}
   end
 
   def handle_cast({:cast, fun}, state) do
@@ -78,12 +79,11 @@ defmodule Swarm.Agent.Server do
     {:noreply, state}
   end
   def handle_cast({:swarm, :end_handoff, handoff}, state) do
-    Util.debug{:end_handoff, handoff, state}
+    Util.debug{self(), :end_handoff, handoff, state}
     {:noreply, state}
   end
   def handle_cast({:swarm, :resolve_conflict, other}, state) do
-    # DeltaCrdt.set_neighbours(n, neighbours)
-    Util.debug{:resolve_conflict, other, state}
+    Util.debug{self(), :resolve_conflict, other, state}
     {:noreply, state}
   end
 
@@ -94,22 +94,21 @@ defmodule Swarm.Agent.Server do
     handle_cast({:cast, path, fun}, state)
   end
   def handle_info({:swarm, :die}, state) do
-    Util.debug{:die, state}
-    leave(state)
-    Process.sleep(3_000)
-    Util.debug{:shutdown, state}
+    # Util.debug{self(), :die, state}
+    Process.send_after(self(), :shutdown, 3_000)
+    {:noreply, state}
+  end
+  def handle_info(:shutdown, state) do
+    # Util.debug{self(), :shutdown, state}
     {:stop, :shutdown, state}
   end
-  def terminate(_, state) do
-    leave(state)
-    Util.debug{:terminate, state, self()}
-    :normal
-  end
-
-  defp leave({id, sup}) do
-    Util.debug{:leave, id, self()}
+  def terminate(_, {id, sup}) do
+    # Util.debug{self(), :terminate, {id, sup}}
     Swarm.leave(id, self())
-    Supervisor.stop(sup)
+    if Process.alive?(sup) do
+      Supervisor.stop(sup)
+    end
+    :normal
   end
 
   defp get_store(state, store) do
@@ -117,7 +116,7 @@ defmodule Swarm.Agent.Server do
   end
   defp get_stores({_, sup}) do
     for {id, pid, _, _} <- Supervisor.which_children(sup),
-    is_pid(pid) and not id in [:undefined, :sync_stores],
+    is_pid(pid) and not(id in [:undefined, :sync_stores]),
     into: %{}, do: {id, pid}
   end
 

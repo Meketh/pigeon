@@ -7,7 +7,7 @@ defmodule Swarm.Agent.Net.Test do
     nodes = start_nodes(2)
     assert replicate(id, []) == {:ok, id}
     assert exists(id)
-    eventually assert different_nodes(id)
+    assert_eventually different_nodes(id)
     dereplicate(id)
     stop_nodes(nodes)
   end
@@ -26,22 +26,22 @@ defmodule Swarm.Agent.Net.Test do
   @tag cluster: true
   test "survives node loss" do
     id = :survives
-    # [n1, n2] = start_nodes(2)
-    nodes = start_nodes(2)
+    [n1, n2] = start_nodes(2)
+    # nodes = start_nodes(2)
     assert replicate(id, [:state]) == {:ok, id}
     assert_eventually different_nodes(id)
     assert set(id, [:state, :key], :value) == :ok
     assert_eventually converges(id, [:state, :key], :value)
 
-    # stop_nodes([n1])
-    # assert_eventually converges(id, [:state, :key], :value)
-    # stop_nodes([n2])
+    stop_nodes([n1])
+    assert_eventually converges(id, [:state, :key], :value)
+    stop_nodes([n2])
+    assert_eventually converges(id, [:state, :key], :value)
+    assert_eventually same_node(id)
+
+    # stop_nodes(nodes)
     # assert_eventually same_node(id)
     # assert_eventually converges(id, [:state, :key], :value)
-
-    stop_nodes(nodes)
-    assert_eventually same_node(id)
-    assert_eventually converges(id, [:state, :key], :value)
 
     [n1, n2, n3, n4] = nodes = start_nodes(4)
     [n1, n2, n3, n4] |> Util.debug
@@ -65,10 +65,7 @@ defmodule Swarm.Agent.Net.Test do
     [n1, n2, n3] = id
     |> Swarm.Supervisor.whereare()
     |> Util.debug
-    |> Enum.map(&(case &1 do
-      pid when is_pid(pid) -> node(&1)
-      other -> other
-    end))
+    |> Enum.map(&get_node/1)
     |> Util.debug
     n1 == n2 and n2 == n3
   end
@@ -76,9 +73,12 @@ defmodule Swarm.Agent.Net.Test do
   def different_nodes(id) do
     [n1, n2, n3] = id
     |> Swarm.Supervisor.whereare()
-    |> Enum.map(&node(&1))
+    |> Enum.map(&get_node/1)
     n1 != n2 and n2 != n3 and n3 != n1
   end
+
+  def get_node(pid) when is_pid(pid), do: node(pid)
+  def get_node(pid), do: pid
 end
 # assert Node.ping(node1) == :pong
 # Node.spawn(node1, Kernel, :send, [self(), :from_node_1])

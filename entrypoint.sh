@@ -5,6 +5,7 @@ watch_cmd() {
   done
 }
 if [ "$2" = "" ]; then # Docker
+  export MIX_ENV=docker
   watch_cmd "$COOKIE --name pigeon@$(hostname -i) -S mix run --no-halt"
 else # Localhost
   export NODE_IPS="$1"

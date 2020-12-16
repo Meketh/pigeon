@@ -43,23 +43,11 @@ defmodule Swarm.Supervisor do
   end
 
   def via(id), do: {:via, :swarm, id}
-  # def call_all(id, msg) do
-  #   for r <- 1..@replicas do
-  #     try do
-  #       via = via(%{id: id, replica: r})
-  #       if Process.alive?(via) do
-  #         GenServer.call(via, msg)
-  #       end
-  #     catch
-  #       :exit, _ -> nil
-  #     end
-  #   end
-  # end
   def call_any(id, msg) do
-    do_any(&GenServer.call/2, %{id: id, replica: 1}, msg)
+    do_any(:call, %{id: id, replica: 1}, msg)
   end
   def cast_any(id, msg) do
-    do_any(&GenServer.cast/2, %{id: id, replica: 1}, msg)
+    do_any(:cast, %{id: id, replica: 1}, msg)
   end
 
   defp do_any(act, id, msg, error \\ :replica_not_found)
@@ -70,9 +58,10 @@ defmodule Swarm.Supervisor do
   defp do_any(act, id, msg, error) do
     next_id = update_in(id, [:replica], &(&1 + 1))
     if exists(id) do
-      case act.(via(id), msg) do
-        {:error, error} -> do_any(act, next_id, msg, error)
-        reply -> reply
+      try do
+        apply(GenServer, act, [via(id), msg])
+      catch
+        :exit, error -> do_any(act, next_id, msg, error)
       end
     else
       do_any(act, next_id, msg, error)

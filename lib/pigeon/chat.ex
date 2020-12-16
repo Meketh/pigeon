@@ -1,13 +1,22 @@
 # defmodule Chat do
-#   use Swarm.Agent, [:name, members: %{}, msgs: %{}]
-#   def handle_conflict(other, self) do
-#     super(other, self)
-#     |> put_in([:members],
-#       Map.merge(self.members, other.members, fn({ta, va}, {tb, vb})->
-#         if ta > tb do {ta, va} else {tb, vb} end
-#       end))
-#     |> put_in([:msgs], Map.merge(self.msgs, other.msgs, super)
+#   import Util
+#   use Swarm.Agent
+
+#   defmodule Msg do
+#     defstruct [:id, :sender, :text, :created]
+#     def new(sender, text) do
+#       %Msg{id: Nanoid.generate(),
+#         sender: sender, text: text,
+#         created: :os.system_time}
+#     end
 #   end
+
+#   def new(name) do
+#     ok? replicate(Nanoid.generate(), [:state, :members, :msgs]),
+#     do: name(id, name)
+#   end
+#   def name(id), do: get(id, [:state, :name])
+#   def name(id, name), do: set(id, [:state, :name], name)
 
 #   # fetch
 #   def members(id), do: fetch(id, :members)

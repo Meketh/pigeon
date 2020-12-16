@@ -8,6 +8,10 @@ defmodule Pigeon.MixProject do
     [app: :pigeon,
     version: "0.1.0",
     elixir: "~> 1.10",
+    elixirc_paths:
+      if Mix.env() == :prod
+      do ["lib", "cli"]
+      else ["lib"] end,
     build_embedded: Mix.env() == :prod,
     start_permanent: Mix.env() == :prod,
     deps: [
@@ -19,7 +23,7 @@ defmodule Pigeon.MixProject do
       {:swarm, "~> 3.4.0"},
       {:delta_crdt, "~> 0.5.10"},
       {:nanoid, "~> 2.0.4"},
-      {:ratatouille, "~> 0.5.1"},
+      {:ratatouille, "~> 0.5.1", only: :prod},
     ]]
   end
 end

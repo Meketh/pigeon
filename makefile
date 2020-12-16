@@ -12,5 +12,5 @@ tests:
 install:
 	rm -rf _build deps
 	mix do deps.get, deps.compile
-up: install
+up:
 	docker-compose up -d --scale node=3
