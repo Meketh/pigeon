@@ -1,6 +1,6 @@
 import Config
 config :nanoid, size: 7
-config :pigeon, replicas: 3, sync_interval: 666, timeout: 13_000
+config :pigeon, replicas: 3, timeout: 13_000
 config :logger, compile_time_purge_matching: [
   # [module: Bar, function: "foo/3", level_lower_than: :error],
   [application: :peerage],

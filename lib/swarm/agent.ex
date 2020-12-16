@@ -1,65 +1,35 @@
 defmodule Swarm.Agent do
   alias Swarm.Supervisor, as: SS
-  def exists(id), do: SS.replicated(id)
-  def replicate(id, stores), do: SS.replicate(child_spec(id, stores))
-  def dereplicate(id), do: SS.dereplicate(id)
-
-  def child_spec(id, stores) do
-    %{id: id, type: :supervisor, restart: :transient,
-    start: {__MODULE__, :start_link, [id, stores]}}
+  def unreplicate(id), do: SS.unreplicate(id)
+  def replicate(id) do
+    SS.replicate(%{id: id,
+    start: {__MODULE__, :start_store, []}})
   end
-  def start_link(id, stores) do
-    GenServer.start_link(Swarm.Agent.Server, {id, stores})
+  def start_store(id, _r) do
+    {:ok, pid} = DeltaCrdt.start_link(DeltaCrdt.AWLWWMap)
+    Task.async(fn->
+      Swarm.join(id, pid)
+      pids = id
+      |> Swarm.members()
+      |> Enum.filter(&is_pid/1)
+      Enum.map(pids, &DeltaCrdt.set_neighbours(&1, pids))
+    end)
+    {:ok, pid}
   end
 
-  def set_all(id, path, value), do: Swarm.multi_call(id, {:get, path, value})
-  def get_all(id, path), do: Swarm.multi_call(id, {:get, path})
-  def get_all(id, path, fun), do: Swarm.multi_call(id, {:get, path, fun})
-  def get_and_update_all(id, fun), do: Swarm.multi_call(id, {:get_and_update, fun})
-  def get_and_update_all(id, path, fun), do: Swarm.multi_call(id, {:get_and_update, path, fun})
-  def update_all(id, fun), do: Swarm.multi_call(id, {:update, fun})
-  def update_all(id, path, fun), do: Swarm.multi_call(id, {:update, path, fun})
-  def cast_all(id, fun), do: Swarm.publish(id, {:cast, fun})
-  def cast_all(id, path, fun), do: Swarm.publish(id, {:cast, path, fun})
-
-  def set(id, path, value), do: SS.call_any(id, {:set, path, value})
-  def get(id, path), do: SS.call_any(id, {:get, path})
-  def get(id, path, fun), do: SS.call_any(id, {:get, path, fun})
-  def get_and_update(id, fun), do: SS.call_any(id, {:get_and_update, fun})
-  def get_and_update(id, path, fun), do: SS.call_any(id, {:get_and_update, path, fun})
-  def update(id, fun), do: SS.call_any(id, {:update, fun})
-  def update(id, path, fun), do: SS.call_any(id, {:update, path, fun})
-  def cast(id, fun), do: SS.cast_any(id, {:cast, fun})
-  def cast(id, path, fun), do: SS.cast_any(id, {:cast, path, fun})
-
-  defmacro __using__(_opts) do
-    quote do
-      alias Swarm.Agent, as: SA
-      def mfa(fun, args), do: {__MODULE__, fun, args}
-      def group(id), do: {__MODULE__, id}
-      def exists(id), do: SA.exists(group(id))
-      def replicate(id, stores), do: SA.replicate(group(id), stores)
-      def dereplicate(id), do: SA.dereplicate(group(id))
-
-      def set_all(id, path, value), do: SA.set_all(group(id), path, value)
-      def get_all(id, path), do: SA.get_all(group(id), path)
-      def get_all(id, path, fun), do: SA.get_all(group(id), path, fun)
-      def get_and_update_all(id, fun), do: SA.get_and_update_all(group(id), fun)
-      def get_and_update_all(id, path, fun), do: SA.get_and_update_all(group(id), path, fun)
-      def update_all(id, fun), do: SA.update_all(group(id), fun)
-      def update_all(id, path, fun), do: SA.update_all(group(id), path, fun)
-      def cast_all(id, fun), do: SA.cast_all(group(id), fun)
-      def cast_all(id, path, fun), do: SA.cast_all(group(id), path, fun)
-
-      def set(id, path, value), do: SA.set(group(id), path, value)
-      def get(id, path), do: SA.get(group(id), path)
-      def get(id, path, fun), do: SA.get(group(id), path, fun)
-      def get_and_update(id, fun), do: SA.get_and_update(group(id), fun)
-      def get_and_update(id, path, fun), do: SA.get_and_update(id, path, fun)
-      def update(id, fun), do: SA.update(group(id), fun)
-      def update(id, path, fun), do: SA.update(group(id), path, fun)
-      def cast(id, fun), do: SA.cast(group(id), fun)
-      def cast(id, path, fun), do: SA.cast(group(id), path, fun)
-    end
+  def read(id) do
+    SS.do_any(DeltaCrdt, :read, id)
+  end
+  def write(id, key, value) do
+    SS.do_any(DeltaCrdt, :mutate, id, [:add, [key, value]])
+  end
+  def remove(id, key) do
+    SS.do_any(DeltaCrdt, :mutate, id, [:remove, [key]])
+  end
+  def write_async(id, key, value) do
+    SS.do_any(DeltaCrdt, :mutate_async, id, [:add, [key, value]])
+  end
+  def remove_async(id, key) do
+    SS.do_any(DeltaCrdt, :mutate_async, id, [:remove, [key]])
   end
 end
