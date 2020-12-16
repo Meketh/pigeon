@@ -8,10 +8,10 @@ defmodule Swarm.Distribution do
     for n <- nodes, into: ring, do: n
   end
 
-  def key_to_node(ring, %{id: id, replica: r}) do
+  def key_to_node(ring, {id, r}) do
     id_to_node(MapSet.to_list(ring), id, r)
   end
-  def key_to_node(ring, %{id: id}) do
+  def key_to_node(ring, {id}) do
     id_to_node(MapSet.to_list(ring), id)
   end
 
