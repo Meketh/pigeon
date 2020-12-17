@@ -12,7 +12,7 @@ else # Localhost
   if [ "$2" = "test" ]; then
     watch_cmd "-S mix test --no-start $3"
   elif [ "$2" = "cli" ]; then
-    sh -c "iex $COOKIE --sname cli-$(date +%s%N) --remsh pigeon@0.0.0.0"
+    sh -c "iex $COOKIE --name $(date +%s%N)@cli --remsh pigeon@0.0.0.0"
   else
     export MIX_ENV=prod
     sh -c "iex $COOKIE --name pigeon@0.0.0.0 -S mix $2 --no-halt"

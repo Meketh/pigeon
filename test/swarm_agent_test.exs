@@ -60,84 +60,81 @@ defmodule Swarm.Agent.Test do
     unreplicate(id)
   end
 
-  # @tag cluster: true
-  # test "replicates on different nodes" do
-  #   id = :replicates
-  #   nodes = start_nodes(2)
-  #   assert replicate(id, []) == {:ok, id}
-  #   assert_eventually different_nodes(id)
-  #   unreplicate(id)
-  #   stop_nodes(nodes)
-  # end
+  @tag cluster: true
+  test "replicates on different nodes" do
+    id = :replicates
+    nodes = start_nodes(2)
+    assert replicate(id) == {:ok, id}
+    assert_eventually different_nodes(id)
+    unreplicate(id)
+    stop_nodes(nodes)
+  end
+
+  @tag cluster: true
+  test "eventually converges" do
+    id = :converges
+    nodes = start_nodes(2)
+    assert replicate(id) == {:ok, id}
+    assert set(id, [:key], :value) == :ok
+    assert_eventually converges(id, [:key], :value)
+    unreplicate(id)
+    stop_nodes(nodes)
+  end
 
   # @tag cluster: true
-  # test "eventually converges" do
-  #   id = :converges
-  #   nodes = start_nodes(2)
-  #   assert replicate(id, [:state]) == {:ok, id}
-  #   assert set(id, [:state, :key], :value) == :ok
-  #   assert_eventually converges(id, [:state, :key], :value)
-  #   unreplicate(id)
-  #   stop_nodes(nodes)
-  # end
+  test "survives node loss" do
+    id = :survives
+    [n1, n2] = start_nodes(2)
+    # nodes = start_nodes(2)
+    assert replicate(id) == {:ok, id}
+    assert_eventually different_nodes(id)
+    assert set(id, [:key], :value) == :ok
+    assert_eventually converges(id, [:key], :value)
 
-  # @tag cluster: true
-  # test "survives node loss" do
-  #   id = :survives
-  #   [n1, n2] = start_nodes(2)
-  #   # nodes = start_nodes(2)
-  #   assert replicate(id, [:state]) == {:ok, id}
-  #   assert_eventually different_nodes(id)
-  #   assert set(id, [:state, :key], :value) == :ok
-  #   assert_eventually converges(id, [:state, :key], :value)
+    stop_nodes([n1])
+    assert_eventually converges(id, [:key], :value)
+    stop_nodes([n2])
+    assert_eventually converges(id, [:key], :value)
+    assert_eventually same_node(id)
 
-  #   stop_nodes([n1])
-  #   assert_eventually converges(id, [:state, :key], :value)
-  #   stop_nodes([n2])
-  #   assert_eventually converges(id, [:state, :key], :value)
-  #   assert_eventually same_node(id)
+    # stop_nodes(nodes)
+    # assert_eventually same_node(id)
+    # assert_eventually converges(id, [:key], :value)
 
-  #   # stop_nodes(nodes)
-  #   # assert_eventually same_node(id)
-  #   # assert_eventually converges(id, [:state, :key], :value)
+    nodes = start_nodes(2)
+    assert_eventually different_nodes(id)
+    assert_eventually converges(id, [:key], :value)
+    unreplicate(id)
+    stop_nodes(nodes)
+  end
 
-  #   [n1, n2, n3, n4] = nodes = start_nodes(4)
-  #   [n1, n2, n3, n4] |> Util.debug
+  @tag cluster: true
+  test "resolves conflicts on partition heal" do
+  end
 
-  #   assert_eventually different_nodes(id)
-  #   assert_eventually get_all(id, [:state, :key]) == [:value, :value, :value]
-  #   assert_eventually converges(id, [:state, :key], :value)
-  #   unreplicate(id)
-  #   stop_nodes(nodes)
-  # end
+  defp converges(id, path, value) do
+    for member <- Swarm.members(id) do
+      DeltaCrdt.read(member)
+      |> get_in(path)
+    end |> Enum.all?(&(&1 == value))
+  end
 
-  # @tag cluster: true
-  # test "resolves conflicts on partition heal" do
-  # end
+  defp same_node(id) do
+    [n1, n2, n3] = id
+    |> Swarm.Supervisor.whereare()
+    |> Util.debug
+    |> Enum.map(&get_node/1)
+    |> Util.debug
+    n1 == n2 and n2 == n3
+  end
 
-  # defp converges(id, path, value) do
-  #   get_all(id, path) |> Util.debug |> Enum.all?(&(&1 == value))
-  # end
+  defp different_nodes(id) do
+    [n1, n2, n3] = id
+    |> Swarm.Supervisor.whereare()
+    |> Enum.map(&get_node/1)
+    n1 != n2 and n2 != n3 and n3 != n1
+  end
 
-  # defp same_node(id) do
-  #   [n1, n2, n3] = id
-  #   |> Swarm.Supervisor.whereare()
-  #   |> Util.debug
-  #   |> Enum.map(&get_node/1)
-  #   |> Util.debug
-  #   n1 == n2 and n2 == n3
-  # end
-
-  # defp different_nodes(id) do
-  #   [n1, n2, n3] = id
-  #   |> Swarm.Supervisor.whereare()
-  #   |> Enum.map(&get_node/1)
-  #   n1 != n2 and n2 != n3 and n3 != n1
-  # end
-
-  # defp get_node(pid) when is_pid(pid), do: node(pid)
-  # defp get_node(pid), do: pid
+  defp get_node(pid) when is_pid(pid), do: node(pid)
+  defp get_node(pid), do: pid
 end
-# assert Node.ping(node1) == :pong
-# Node.spawn(node1, Kernel, :send, [self(), :from_node_1])
-# assert_receive :from_node_1

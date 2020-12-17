@@ -36,7 +36,8 @@ defmodule Swarm.Task do
   end
 
   def wait(t) do
-    d = t - :os.system_time
-    unless d < 0, do: Process.sleep(d)
+    d = t - :os.system_time(:seconds)
+    IO.inspect(d)
+    unless d < 0, do: Process.sleep(d * 1000)
   end
 end

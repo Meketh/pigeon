@@ -10,7 +10,7 @@ defmodule Pigeon.MixProject do
     elixir: "~> 1.10",
     elixirc_paths:
       if Mix.env() == :prod
-      do ["lib", "cli"]
+      do ["lib", "client"]
       else ["lib"] end,
     build_embedded: Mix.env() == :prod,
     start_permanent: Mix.env() == :prod,

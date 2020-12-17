@@ -20,6 +20,24 @@ defmodule Swarm.Agent do
   def read(id) do
     SS.do_any(DeltaCrdt, :read, id)
   end
+  def read(id, path) do
+    SS.do_any(DeltaCrdt, :read, id)
+    |> get_in(path)
+  end
+  def set(id, [key | path], value) do
+    old = read(id, [key | path])
+    write(id, key, case path do
+      [] -> value
+      path -> put_in(old, path, value)
+    end)
+  end
+  def update(id, [key | path], fun) do
+    old = read(id, [key | path])
+    write(id, key, case path do
+      [] -> apply(fun, [old])
+      path -> update_in(old, path, fun)
+    end)
+  end
   def write(id, key, value) do
     SS.do_any(DeltaCrdt, :mutate, id, [:add, [key, value]])
   end

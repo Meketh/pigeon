@@ -4,7 +4,7 @@ defmodule Test.Case do
       import Util
       import Test.Case
       use ExUnit.Case
-      use AssertEventually, timeout: 3_000, interval: 100
+      use AssertEventually, timeout: 30_000, interval: 100
       doctest unquote(subject)
       import unquote(subject)
       def run_on(node, fun, args), do: run_on(node, unquote(subject), fun, args)
